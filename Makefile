@@ -1,9 +1,24 @@
-all: Tetris
+# Find all .asm files
+SRC := $(shell find src -name "*.asm")
 
-Tetris: src/main.asm
+# Convert src/foo.asm → build/foo.o
+OBJ := $(patsubst src/%.asm, build/%.o, $(SRC))
+
+# Final binary
+TARGET := build/Tetris
+
+all: $(TARGET)
+
+# Link everything
+$(TARGET): $(OBJ)
 	mkdir -p build
-	nasm -f elf64 src/main.asm -o build/main.o
-	ld build/main.o -o build/Tetris
+	ld $(OBJ) -o $(TARGET)
+
+# Compile each .asm → .o (preserve structure)
+build/%.o: src/%.asm
+	mkdir -p $(dir $@)
+	nasm -f elf64 $< -o $@
 
 clean:
 	rm -rf build
+
