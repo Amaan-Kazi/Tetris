@@ -1,16 +1,18 @@
 section .data
 ; https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands
-; 0x1b = ESC
 
-enable  db 0x1b, "[?1049h"
+ESC     equ 0x1b
+
+enable  db  ESC, "[?1049h"
 length1 equ $ - enable
 
-disable db 0x1b, "[?1049l"
+disable db  ESC, "[?1049l"
 length2 equ $ - disable
 
 
 section .text
 
+align 16
 global enableAlternateBuffer
 enableAlternateBuffer:
   mov rax, 1 ; write
@@ -20,6 +22,7 @@ enableAlternateBuffer:
   syscall
   ret
 
+align 16
 global disableAlternateBuffer
 disableAlternateBuffer:
   mov rax, 1 ; write
