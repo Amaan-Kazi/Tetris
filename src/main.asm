@@ -5,12 +5,17 @@ extern disableAlternateBuffer
 ; signal/set-handler
 extern setSignalHandler
 
+; util/ascii
+extern numToASCII
+
 
 section .data
 
+specialNumberASCII db 20 dup(0x30)
+
 ENDL    equ 0x0A
 
-message db  ENDL, "Recieved Ctrl + C", ENDL, "Press again to exit", ENDL
+message db  ENDL, "Recieved Ctrl + C", ENDL, "Press again to exit", ENDL, "Special Number: "
 length  equ $ - message
 
 interruptFlag  db 0
@@ -40,6 +45,19 @@ _start:
     mov edi, 1 ; stdout
     mov rsi, message
     mov rdx, length
+    syscall
+
+    ; convert number to ASCII
+    mov rdi, -12345
+    mov rsi, 1
+    mov rdx, specialNumberASCII
+    call numToASCII
+
+    ; Print special number
+    mov rdx, rax
+    mov rax, 1
+    mov edi, 1
+    mov rsi, specialNumberASCII
     syscall
 
     cmp byte [interruptCount], 1
