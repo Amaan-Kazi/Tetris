@@ -3,9 +3,11 @@ section .text
 ; Convert signed or unsigned 64bit number to ASCII string
 ; ASCII string is in outputBuffer
 ; Length of string is returned in rax
-align 16
-global numToASCII
-numToASCII:
+global num_to_ascii
+num_to_ascii:
+  push rbp
+  mov  rbp, rsp
+
   ; arg1 rdi = int64 | uint64   num
   ; arg2 rsi = boolean          isSigned
   ; arg3 rdx = char buffer[20]  outputBuffer
@@ -75,5 +77,8 @@ numToASCII:
 
   mov rdx, r8
   mov rax, rcx
+
+  mov rsp, rbp
+  pop rbp
   ret
 

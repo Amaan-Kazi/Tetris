@@ -1,24 +1,20 @@
 ; terminal/alternate-buffer
-extern enableAlternateBuffer
-extern disableAlternateBuffer
-
-; screen/buffer
-extern setupWindowChangeHandler
+extern enable_alt_buffer
+extern disable_alt_buffer
 
 ; screen/main-menu/main-menu
-extern mainMenu
+extern main_menu
 
 
 section .text
 
-align 16
 global _start
 _start:
-  call enableAlternateBuffer
+  call enable_alt_buffer
   
-  call mainMenu
+  call main_menu
 
-  call disableAlternateBuffer
+  call disable_alt_buffer
 
   ; Exit with code 0
   mov rax, 60

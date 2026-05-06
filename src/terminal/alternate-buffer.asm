@@ -12,23 +12,33 @@ length2 equ $ - disable
 
 section .text
 
-align 16
-global enableAlternateBuffer
-enableAlternateBuffer:
+global enable_alt_buffer
+enable_alt_buffer:
+  push rbp
+  mov  rbp, rsp
+
   mov rax, 1 ; write
   mov edi, 1 ; stdout
   mov rsi, enable
   mov rdx, length1
   syscall
+
+  mov rsp, rbp
+  pop rbp
   ret
 
-align 16
-global disableAlternateBuffer
-disableAlternateBuffer:
+global disable_alt_buffer
+disable_alt_buffer:
+  push rbp
+  mov  rbp, rsp
+
   mov rax, 1 ; write
   mov edi, 1 ; stdout
   mov rsi, disable
   mov rdx, length2
   syscall
+
+  mov rsp, rbp
+  pop rbp
   ret
 
