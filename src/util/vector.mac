@@ -1,0 +1,172 @@
+; Generate a specialized Vector definition for any type
+;
+; DEFINE_VECTOR name size
+;
+; Generates:
+; name_vec_init    Function to initialize vector
+; name_vec_push    Function to push to vector (automatic grow)
+
+
+struc vector
+  .data     resb 8
+  .size     resb 8
+  .capacity resb 8
+endstruc
+
+
+%macro DEFINE_VECTOR 2
+; %1 = element type
+; %2 = element size
+
+
+; Initialize vector
+; rdi = &vector
+; rsi = unsigned long, preallocation size, default = 1, 0 is converted to 1 aswell
+%1_vec_init:
+  push rbp
+  mov  rbp, rsp
+
+  sub rsp, 16
+  mov qword [rbp - 8], rdi
+
+  mov qword [rdi + vector.data], 0
+  mov qword [rdi + vector.size], 0
+
+  ; If preallocation = 0, then make it 1
+  cmp rsi, 0
+  jne .prealloc_not_zero
+  mov rsi, 1
+
+  .prealloc_not_zero:
+  mov qword [rdi + vector.capacity], rsi
+
+  ; Size in bytes
+  mov rax, %2
+  mul rsi
+  mov rsi, rax
+
+  mov rax, 9       ; SYS_mmap
+  mov rdi, 0       ; address = NULL, let kernel return address
+  ; rsi already has length
+  mov rdx, 0b11    ; protection = PROT_READ (0b01) | PROT_WRITE  (0b10)
+  mov r10, 0x22    ; flags = MAP_ANONYMOUS  (0x20) | MAP_PRIVATE (0x02)
+  mov r8,  -1      ; fd
+  mov r9,  0       ; offset
+  syscall
+
+  mov rdi, qword [rbp - 8]
+
+  ; if syscall error then exit
+  test rax, rax
+  js .exit
+
+  mov qword [rdi + vector.data], rax
+
+  .exit:
+  mov rsp, rbp
+  pop rbp
+  ret
+
+
+; Add element to end of vector
+; Automatically grows if vector full
+; Can invalidate pointers if grown
+; rdi = &vector
+; rsi = &data
+%1_vec_push:
+  push rbp
+  mov  rbp, rsp
+
+  sub rsp, 16
+  mov qword [rbp - 8],  rdi
+  mov qword [rbp - 16], rsi
+
+  ; if size = capacity, then grow
+  mov r8, qword [rdi + vector.size]
+  cmp r8, qword [rdi + vector.capacity]
+  jne .capacity_available
+
+  call %1_vec_grow
+  mov rdi, qword [rbp - 8]
+  mov rsi, qword [rbp - 16]
+  mov r8, qword [rdi + vector.size]
+
+  .capacity_available:
+
+  ; not incrementing r8 since we must store at size - 1
+
+  ; copy data into next element
+  mov rdi, [rdi + vector.data]
+
+%if %2 = 1 || %2 = 2 || %2 = 4 || %2 = 8
+  lea rdi, [rdi + r8 * %2]
+%else
+  mov rax, %2
+  mul r8
+  lea rdi, [rdi + rax]
+%endif
+
+  mov rcx, %2
+  cld
+  rep movsb
+
+  mov rdi, qword [rbp - 8]
+  mov r8, [rdi + vector.size]
+  inc r8
+  mov qword [rdi + vector.size], r8
+
+  mov rsp, rbp
+  pop rbp
+  ret
+
+
+; Double the capacity of the vector
+; Invalidates pointers if array can't be extended in place and has to be copied
+; rdi = &vector
+%1_vec_grow:
+  push rbp
+  mov  rbp, rsp
+
+  sub rsp, 16
+  mov qword [rbp - 8], rdi
+
+  ; old length
+  mov rsi, qword [rdi + vector.capacity]
+  mov qword [rbp - 16], rsi
+
+  ; in bytes
+  mov rax, %2
+  mul rsi
+  mov rsi, rax
+
+  ; new length in bytes
+  shl rax, 1
+  mov rdx, rax
+
+  mov rax, 25 ; SYS_mremap
+  mov rdi, [rdi + vector.data]
+  ; rsi already has old length
+  ; rdx already has new length
+  mov r10, 1 ; flags = MREMAP_MAYMOVE
+  mov r8,  0 ; new address = NULL, let kernel return address
+  syscall
+
+  test rax, rax
+  js .exit
+
+  ; new length (count, not bytes)
+  mov rsi, qword [rbp -16]
+  shl rsi, 1
+
+  mov rdi, qword [rbp - 8]
+  mov qword [rdi + vector.data], rax
+  mov qword [rdi + vector.capacity], rsi
+
+  .exit:
+  mov rsp, rbp
+  pop rbp
+  ret
+
+
+%endmacro
+
