@@ -3,8 +3,9 @@
 ; DEFINE_VECTOR name size
 ;
 ; Generates:
-; name_vec_init    Function to initialize vector
-; name_vec_push    Function to push to vector (automatic grow)
+; name_init     Function to initialize vector
+; name_push     Function to push to vector (automatic grow)
+; name_reserve  Function to reserve memory for desired capacity
 
 
 struc vector
@@ -15,14 +16,14 @@ endstruc
 
 
 %macro DEFINE_VECTOR 2
-; %1 = element type
+; %1 = vector name
 ; %2 = element size
 
 
 ; Initialize vector
 ; rdi = &vector
 ; rsi = unsigned long, preallocation size, default = 1, 0 is converted to 1 aswell
-%1_vec_init:
+%1_init:
   push rbp
   mov  rbp, rsp
 
@@ -73,7 +74,7 @@ endstruc
 ; Can invalidate pointers if grown
 ; rdi = &vector
 ; rsi = &data
-%1_vec_push:
+%1_push:
   push rbp
   mov  rbp, rsp
 
@@ -86,7 +87,9 @@ endstruc
   cmp r8, qword [rdi + vector.capacity]
   jne .capacity_available
 
-  call %1_vec_grow
+  mov rsi, r8
+  shl rsi, 1
+  call %1_reserve
   mov rdi, qword [rbp - 8]
   mov rsi, qword [rbp - 16]
   mov r8, qword [rdi + vector.size]
@@ -98,7 +101,7 @@ endstruc
   ; copy data into next element
   mov rdi, [rdi + vector.data]
 
-%if %2 = 1 || %2 = 2 || %2 = 4 || %2 = 8
+%if (%2 = 1) || (%2 = 2) || (%2 = 4) || (%2 = 8)
   lea rdi, [rdi + r8 * %2]
 %else
   mov rax, %2
@@ -120,33 +123,37 @@ endstruc
   ret
 
 
-; Double the capacity of the vector
+; Reserve memory for desired capacity
 ; Invalidates pointers if array can't be extended in place and has to be copied
 ; rdi = &vector
-%1_vec_grow:
+; rsi = capacity
+%1_reserve:
   push rbp
   mov  rbp, rsp
 
   sub rsp, 16
   mov qword [rbp - 8], rdi
-
-  ; old length
-  mov rsi, qword [rdi + vector.capacity]
   mov qword [rbp - 16], rsi
 
-  ; in bytes
+  ; new capacity in bytes
+  mov rax, %2
+  mul rsi
+  mov r9, rax
+
+  ; old capacity in bytes
+  mov rsi, qword [rdi + vector.capacity]
   mov rax, %2
   mul rsi
   mov rsi, rax
 
-  ; new length in bytes
-  shl rax, 1
-  mov rdx, rax
+  ; if newLen <= oldLen, then exit
+  cmp r9, rdx
+  jle .exit
 
   mov rax, 25 ; SYS_mremap
   mov rdi, [rdi + vector.data]
-  ; rsi already has old length
-  ; rdx already has new length
+  ; rsi already has old capacity in bytes
+  mov rdx, r9
   mov r10, 1 ; flags = MREMAP_MAYMOVE
   mov r8,  0 ; new address = NULL, let kernel return address
   syscall
@@ -154,11 +161,9 @@ endstruc
   test rax, rax
   js .exit
 
-  ; new length (count, not bytes)
-  mov rsi, qword [rbp -16]
-  shl rsi, 1
-
+  ; update data pointer and capacity
   mov rdi, qword [rbp - 8]
+  mov rsi, qword [rbp - 16]
   mov qword [rdi + vector.data], rax
   mov qword [rdi + vector.capacity], rsi
 
