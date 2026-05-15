@@ -147,7 +147,7 @@ endstruc
   mov rsi, rax
 
   ; if newLen <= oldLen, then exit
-  cmp r9, rdx
+  cmp r9, rsi
   jle .exit
 
   mov rax, 25 ; SYS_mremap
