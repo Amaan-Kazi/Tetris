@@ -1,9 +1,9 @@
 ; signal/set-handler
 extern set_signal_handler
 
-; screen/buffer
-extern setup_buffer
-extern size_change_handler
+; screen/state
+extern setup_screen
+extern screen_change_handler
 
 
 section .data
@@ -20,6 +20,8 @@ global main_menu
 main_menu:
   push rbp
   mov  rbp, rsp
+
+  call setup_screen
 
   ; Set Interrupt Handler
   mov  rdi, SIGINT
@@ -42,7 +44,7 @@ main_menu:
     ; Reset Flag
     mov byte [size_change_flag], 0
 
-    call size_change_handler
+    call screen_change_handler
 
     jmp .infiniteLoop
 
