@@ -1,0 +1,16 @@
+; Utility macros for pushing and popping multiple registers in the same line
+
+%macro multipush 1-*  ; require 1 or more params
+  %rep  %0            ; repeat for number of params
+    push %1           ; push the first param
+    %rotate 1         ; rotate the params so the second one is now first
+  %endrep
+%endmacro
+
+%macro multipop 1-*
+  %rep  %0
+    pop %1
+    %rotate 1         ; could have been -1 to rotate in opposite direction, hence allowing writing params in same order as multipush
+  %endrep
+%endmacro
+
