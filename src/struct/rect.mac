@@ -1,0 +1,9 @@
+; x1 must be less than x2
+; y1 must be less than y2
+struc rect
+  .x1 resb 2
+  .y1 resb 2
+  .x2 resb 2
+  .y2 resb 2
+endstruc
+

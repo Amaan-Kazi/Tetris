@@ -9,20 +9,35 @@ extern num_to_ascii
 
 %include "src/util/vector.mac"
 
-
-struc cell
-  .text       resb 4
-  .background resb 3
-  .foreground resb 3
-  .width      resb 1
-  .flags      resb 1
-endstruc
+%include "src/struct/cell.mac"
+%include "src/struct/term-state.mac"
 
 DEFINE_VECTOR screen, cell_size
+DEFINE_VECTOR output_buffer, 1
 
 
 section .bss
+
+global screen
 screen resb vector_size
+
+global output_buffer
+output_buffer resb vector_size
+
+
+section .data
+
+global current_term_state
+current_term_state: istruc term_state
+  at term_state.background, db 0, 0, 0
+  at term_state.foreground, db 0, 0, 0
+  at term_state.cursorx,    dw 0
+  at term_state.cursory,    dw 0
+  at term_state.flags,      db 0
+iend
+
+global debug_mode
+debug_mode db 0
 
 
 section .text
@@ -45,6 +60,11 @@ setup_screen:
   mov  rdi, screen
   mov  rsi, rax
   call screen_init
+
+  ; init output buffer with a page preallolcated
+  mov  rdi, output_buffer
+  mov  rsi, 4096
+  call output_buffer_init
 
   ; vector capacity in ascii
   mov  rdi, qword [screen + vector.capacity]

@@ -1,0 +1,8 @@
+struc cell
+  .text       resb 4
+  .background resb 3
+  .foreground resb 3
+  .width      resb 1
+  .flags      resb 1
+endstruc
+
