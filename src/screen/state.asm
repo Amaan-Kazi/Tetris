@@ -22,6 +22,7 @@ global screen
 screen resb vector_size
 
 global output_buffer
+global output_buffer_push
 output_buffer resb vector_size
 
 
