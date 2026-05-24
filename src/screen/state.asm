@@ -6,11 +6,15 @@ extern term.ws_col
 ; util/ascii
 extern num_to_ascii
 
+; screen/generate-output
+extern generate_rect
+
 
 %include "src/util/vector.mac"
 
 %include "src/struct/cell.mac"
 %include "src/struct/term-state.mac"
+%include "src/struct/rect.mac"
 
 DEFINE_VECTOR screen, cell_size
 DEFINE_VECTOR output_buffer, 1
@@ -49,7 +53,7 @@ setup_screen:
   push rbp
   mov  rbp, rsp
 
-  sub rsp, 32
+  sub rsp, 16
 
   ; buffer size
   call  term_get_size
@@ -67,18 +71,34 @@ setup_screen:
   mov  rsi, 4096
   call output_buffer_init
 
-  ; vector capacity in ascii
-  mov  rdi, qword [screen + vector.capacity]
-  mov  rsi, 0
-  lea  rdx, [rbp - 20]
-  call num_to_ascii
-  mov  qword [rbp - 28], rax
+  ; render test
+  mov rdi, qword [screen + vector.data]
+  mov rax, 10
+  mov rdx, cell_size
+  mul rdx
 
-  ; print capacity
-  mov rax, 1 ; write
-  mov rdi, 1 ; stdout
-  lea rsi, [rbp - 20]
-  mov rdx, qword [rbp - 28]
+  mov byte [rdi + rax + cell.text], 'H'
+  add rax, cell_size
+  mov byte [rdi + rax + cell.text], 'e'
+  add rax, cell_size
+  mov byte [rdi + rax + cell.text], 'l'
+  add rax, cell_size
+  mov byte [rdi + rax + cell.text], 'l'
+  add rax, cell_size
+  mov byte [rdi + rax + cell.text], 'o'
+
+  mov word [rbp - 8 + rect.x1], 10
+  mov word [rbp - 8 + rect.y1], 0
+  mov word [rbp - 8 + rect.x2], 14
+  mov word [rbp - 8 + rect.y2], 0
+
+  lea rdi, [rbp - 8]
+  call generate_rect
+
+  mov rax, 1
+  mov rdi, 1
+  mov rsi, qword [output_buffer + vector.data]
+  mov rdx, qword [output_buffer + vector.size]
   syscall
 
   mov rsp, rbp

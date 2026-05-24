@@ -90,7 +90,7 @@ generate_cell:
   movzx rax, word [term.ws_col]
   mul rsi
   add rax, rdi
-  
+
   ; array offset = (y * width + x) * cell_size
   mov rdx, cell_size
   mul rdx
@@ -121,9 +121,9 @@ generate_cell:
 
 ; arg1 rdi = x
 ; arg2 rsi = y
-global generate_position
 generate_position:
   push rbp
+  multipush r12, r13
   mov  rbp, rsp
 
   sub rsp, 48
@@ -235,14 +235,16 @@ generate_position:
   lea rsi, [rbp - 48]
   call output_buffer_push
 
+  ; TODO: update current_term_state if position changed
+
   .exit:
   mov rsp, rbp
+  multipop r13, r12
   pop rbp
   ret
 
 
 ; arg1 rdi = &cell
-global generate_color
 generate_color:
   push rbp
   mov  rbp, rsp
@@ -253,7 +255,6 @@ generate_color:
 
 
 ; arg1 rdi = &cell
-global generate_flags
 generate_flags:
   push rbp
   mov  rbp, rsp
@@ -264,10 +265,23 @@ generate_flags:
 
 
 ; arg1 rdi = &cell
-global generate_text
 generate_text:
   push rbp
   mov  rbp, rsp
+
+  sub rsp, 8
+
+  ; load text into stack memory
+  mov al, byte [rdi + cell.text]
+  mov byte [rbp - 1], al
+
+  ; push text
+  mov rdi, output_buffer
+  lea rsi, [rbp - 1]
+  call output_buffer_push
+
+  ; TODO: handle 2 wide / 0 wide character
+  inc word [current_term_state + term_state.cursorx]
 
   mov rsp, rbp
   pop rbp
