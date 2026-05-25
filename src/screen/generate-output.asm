@@ -126,6 +126,8 @@ generate_position:
   multipush r12, r13
   mov  rbp, rsp
 
+  ; TODO: terminal positions are 1 indexed, convert from internal 0 indexed representation
+
   sub rsp, 48
   mov qword [rbp - 8],  rdi
   mov qword [rbp - 16], rsi
@@ -192,6 +194,12 @@ generate_position:
   lea rsi, [rbp - 48]
   call output_buffer_push
 
+  ; update current_term_state
+  mov rdi, qword [rbp - 8]
+  mov word [current_term_state + term_state.cursorx], di
+  mov rsi, qword [rbp - 16]
+  mov word [current_term_state + term_state.cursory], si
+
   jmp .exit
 
   .row_equal:
@@ -235,7 +243,9 @@ generate_position:
   lea rsi, [rbp - 48]
   call output_buffer_push
 
-  ; TODO: update current_term_state if position changed
+  ; update current_term_state
+  mov rdi, qword [rbp - 8]
+  mov word [current_term_state + term_state.cursorx], di
 
   .exit:
   mov rsp, rbp
@@ -280,9 +290,17 @@ generate_text:
   lea rsi, [rbp - 1]
   call output_buffer_push
 
+  ; if at lass col, dont increment cursorx so generate_position() on next cell generation
+  ; explicitly jumps to required row and col instead of relying on terminal line wrapping
+  mov ax, word [current_term_state + term_state.cursorx]
+  inc ax
+  cmp ax, word [term.ws_col]
+  jge .exit
+
   ; TODO: handle 2 wide / 0 wide character
   inc word [current_term_state + term_state.cursorx]
 
+  .exit:
   mov rsp, rbp
   pop rbp
   ret
