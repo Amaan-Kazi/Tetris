@@ -13,3 +13,8 @@ Run
 ./build/Tetris
 ```
 
+Debug
+```bash
+./build/Tetris --debug
+```
+

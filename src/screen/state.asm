@@ -41,9 +41,6 @@ current_term_state: istruc term_state
   at term_state.flags,      db 0
 iend
 
-global debug_mode
-debug_mode db 0
-
 
 section .text
 
