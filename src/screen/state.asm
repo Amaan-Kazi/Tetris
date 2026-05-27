@@ -9,6 +9,13 @@ extern num_to_ascii
 ; screen/generate-output
 extern generate_rect
 
+; main
+extern debug_mode
+extern debug_fd
+
+; terminal/alternate-buffer
+extern disable_alt_buffer
+
 
 %include "src/util/vector.mac"
 
@@ -41,6 +48,9 @@ current_term_state: istruc term_state
   at term_state.flags,      db 0
 iend
 
+stdout_error db "ERROR: stdout is not a terminal", 0x0A
+stdout_error_length equ $ - stdout_error
+
 
 section .text
 
@@ -53,7 +63,26 @@ setup_screen:
   sub rsp, 16
 
   ; buffer size
-  call  term_get_size
+  call term_get_size
+
+  cmp rax, 0
+  je .stdout_is_term
+
+  call disable_alt_buffer
+
+  mov rax, 1 ; SYS_write
+  mov rdi, 2 ; stderr
+  mov rsi, stdout_error
+  mov rdx, stdout_error_length
+  syscall
+
+  ; Exit with error
+  mov rax, 60
+  mov rdi, 1
+  syscall
+
+  .stdout_is_term:
+
   movzx rax, word [term.ws_row]
   movzx rdx, word [term.ws_col]
   mul   rdx
@@ -98,6 +127,16 @@ setup_screen:
   mov rdx, qword [output_buffer + vector.size]
   syscall
 
+  cmp byte [debug_mode], 1
+  jne .exit
+
+  mov rax, 1
+  mov rdi, qword [debug_fd]
+  mov rsi, qword [output_buffer + vector.data]
+  mov rdx, qword [output_buffer + vector.size]
+  syscall
+
+  .exit:
   mov rsp, rbp
   pop rbp
   ret
