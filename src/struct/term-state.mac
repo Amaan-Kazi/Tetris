@@ -1,8 +1,8 @@
 struc term_state
   .background resb 3
   .foreground resb 3
-  .cursorx    resb 2
-  .cursory    resb 2
+  .cursorx    resb 2 ; 0 indexed
+  .cursory    resb 2 ; 0 indexed
   .flags      resb 1
 endstruc
 

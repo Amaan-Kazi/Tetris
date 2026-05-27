@@ -126,7 +126,8 @@ generate_position:
   multipush r12, r13
   mov  rbp, rsp
 
-  ; TODO: terminal positions are 1 indexed, convert from internal 0 indexed representation
+  ; NOTE: all internal representations and comparisions are 0 indexed
+  ; only converting to 1 based indexes when generating ANSI escape sequences
 
   sub rsp, 48
   mov qword [rbp - 8],  rdi
@@ -150,6 +151,7 @@ generate_position:
 
   ; convert y to ascii
   mov rdi, qword [rbp - 16]
+  inc rdi
   mov rsi, 0
   lea rdx, [rbp - 36]
   call num_to_ascii
@@ -173,6 +175,7 @@ generate_position:
 
   ; convert x to ascii
   mov rdi, qword [rbp - 8]
+  inc rdi
   mov rsi, 0
   lea rdx, [rbp - 36]
   call num_to_ascii
@@ -195,9 +198,9 @@ generate_position:
   call output_buffer_push
 
   ; update current_term_state
-  mov rdi, qword [rbp - 8]
+  mov di, word [rbp - 8]
   mov word [current_term_state + term_state.cursorx], di
-  mov rsi, qword [rbp - 16]
+  mov si, word [rbp - 16]
   mov word [current_term_state + term_state.cursory], si
 
   jmp .exit
@@ -222,6 +225,7 @@ generate_position:
 
   ; convert x to ascii
   mov rdi, qword [rbp - 8]
+  inc rdi
   mov rsi, 0
   lea rdx, [rbp - 36]
   call num_to_ascii
@@ -244,7 +248,7 @@ generate_position:
   call output_buffer_push
 
   ; update current_term_state
-  mov rdi, qword [rbp - 8]
+  mov di, word [rbp - 8]
   mov word [current_term_state + term_state.cursorx], di
 
   .exit:
@@ -290,17 +294,12 @@ generate_text:
   lea rsi, [rbp - 1]
   call output_buffer_push
 
-  ; if at lass col, dont increment cursorx so generate_position() on next cell generation
-  ; explicitly jumps to required row and col instead of relying on terminal line wrapping
-  mov ax, word [current_term_state + term_state.cursorx]
-  inc ax
-  cmp ax, word [term.ws_col]
-  jge .exit
-
   ; TODO: handle 2 wide / 0 wide character
+
+  ; not handling colum overflow so on next cell generation, generate_position()
+  ; explicitly jumps to required row and col instead of relying on terminal line wrapping
   inc word [current_term_state + term_state.cursorx]
 
-  .exit:
   mov rsp, rbp
   pop rbp
   ret

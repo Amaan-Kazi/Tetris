@@ -113,10 +113,57 @@ setup_screen:
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'o'
 
+  ; (y * width + x) * cell_size    [y is 1 so not multiplying]
+  mov   rax, cell_size
+  movzx rdx, word [term.ws_col]
+  add   rdx, 10
+  mul   rdx
+
+  mov byte [rdi + rax + cell.text], 'W'
+  add rax, cell_size
+  mov byte [rdi + rax + cell.text], 'o'
+  add rax, cell_size
+  mov byte [rdi + rax + cell.text], 'r'
+  add rax, cell_size
+  mov byte [rdi + rax + cell.text], 'l'
+  add rax, cell_size
+  mov byte [rdi + rax + cell.text], 'd'
+
+  ; last col (ws_col - 1) of first row (0)
+  movzx rax, word [term.ws_col]
+  dec rax
+  mov rdx, cell_size
+  mul rdx
+
+  mov byte [rdi + rax + cell.text], 'h'
+
+  ; (y * width + x) * cell_size
+  ; (1 * width + (width - 1)) * cell_size
+  ; (width + width - 1) * cell_size
+  ; (2 * width - 1) * cell_size
+  movzx rax, word [term.ws_col] ; y * width
+  shl rax, 1
+  dec rax
+  mov rdx, cell_size
+  mul rdx
+
+  mov byte [rdi + rax + cell.text], 'i'
+
   mov word [rbp - 8 + rect.x1], 10
   mov word [rbp - 8 + rect.y1], 0
   mov word [rbp - 8 + rect.x2], 14
-  mov word [rbp - 8 + rect.y2], 0
+  mov word [rbp - 8 + rect.y2], 1
+
+  lea rdi, [rbp - 8]
+  call generate_rect
+
+  mov ax, word [term.ws_col]
+  dec ax
+
+  mov word [rbp - 8 + rect.x1], ax
+  mov word [rbp - 8 + rect.y1], 0
+  mov word [rbp - 8 + rect.x2], ax
+  mov word [rbp - 8 + rect.y2], 1
 
   lea rdi, [rbp - 8]
   call generate_rect
