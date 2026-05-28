@@ -1,8 +1,15 @@
 struc cell
-  .text       resb 4
-  .background resb 3
-  .foreground resb 3
-  .width      resb 1
-  .flags      resb 1
+  .text        resb 4
+
+  .backgroundr resb 1
+  .backgroundg resb 1
+  .backgroundb resb 1
+
+  .foregroundr resb 1
+  .foregroundg resb 1
+  .foregroundb resb 1
+
+  .width       resb 1
+  .flags       resb 1
 endstruc
 

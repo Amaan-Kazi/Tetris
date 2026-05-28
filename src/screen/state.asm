@@ -41,11 +41,18 @@ section .data
 
 global current_term_state
 current_term_state: istruc term_state
-  at term_state.background, db 0, 0, 0
-  at term_state.foreground, db 0, 0, 0
-  at term_state.cursorx,    dw 0
-  at term_state.cursory,    dw 0
-  at term_state.flags,      db 0
+  at term_state.cursorx,     dw 0
+  at term_state.cursory,     dw 0
+
+  at term_state.backgroundr, db 0
+  at term_state.backgroundg, db 0
+  at term_state.backgroundb, db 0
+
+  at term_state.foregroundr, db 0
+  at term_state.foregroundg, db 0
+  at term_state.foregroundb, db 0
+
+  at term_state.flags,       db 0
 iend
 
 stdout_error db "ERROR: stdout is not a terminal", 0x0A
@@ -104,14 +111,19 @@ setup_screen:
   mul rdx
 
   mov byte [rdi + rax + cell.text], 'H'
+  mov byte [rdi + rax + cell.foregroundr], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'e'
+  mov byte [rdi + rax + cell.foregroundr], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
+  mov byte [rdi + rax + cell.foregroundg], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
+  mov byte [rdi + rax + cell.foregroundg], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'o'
+  mov byte [rdi + rax + cell.foregroundg], 255
 
   ; (y * width + x) * cell_size    [y is 1 so not multiplying]
   mov   rax, cell_size
@@ -120,14 +132,23 @@ setup_screen:
   mul   rdx
 
   mov byte [rdi + rax + cell.text], 'W'
+  mov byte [rdi + rax + cell.foregroundb], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'o'
+  mov byte [rdi + rax + cell.foregroundb], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'r'
+  mov byte [rdi + rax + cell.foregroundb], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
+  mov byte [rdi + rax + cell.backgroundr], 45
+  mov byte [rdi + rax + cell.backgroundg], 148
+  mov byte [rdi + rax + cell.backgroundb], 76
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'd'
+  mov byte [rdi + rax + cell.backgroundr], 45
+  mov byte [rdi + rax + cell.backgroundg], 148
+  mov byte [rdi + rax + cell.backgroundb], 76
 
   ; last col (ws_col - 1) of first row (0)
   movzx rax, word [term.ws_col]
@@ -136,6 +157,7 @@ setup_screen:
   mul rdx
 
   mov byte [rdi + rax + cell.text], 'h'
+  mov byte [rdi + rax + cell.foregroundr], 255
 
   ; (y * width + x) * cell_size
   ; (1 * width + (width - 1)) * cell_size
@@ -148,6 +170,7 @@ setup_screen:
   mul rdx
 
   mov byte [rdi + rax + cell.text], 'i'
+  mov byte [rdi + rax + cell.foregroundr], 255
 
   mov word [rbp - 8 + rect.x1], 10
   mov word [rbp - 8 + rect.y1], 0

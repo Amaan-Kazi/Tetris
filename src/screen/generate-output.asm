@@ -105,6 +105,11 @@ generate_cell:
   call generate_position
 
   mov rdi, r14
+  mov rsi, 0   ; background
+  call generate_color
+
+  mov rdi, r14
+  mov rsi, 1   ; foreground
   call generate_color
 
   mov rdi, r14
@@ -259,11 +264,137 @@ generate_position:
 
 
 ; arg1 rdi = &cell
+; arg2 rsi = bool isForeground, 0 to generate background, 1 to generate foreground
 generate_color:
   push rbp
+  push r12
   mov  rbp, rsp
 
+  sub rsp, 8
+
+  lea r12, [rdi + cell.backgroundr]
+  mov rax, term_state.backgroundr
+  mov byte [rbp - 2], '4'
+
+  cmp sil, 1
+  jne .is_background
+
+  lea r12, [rdi + cell.foregroundr]
+  mov rax, term_state.foregroundr
+  mov byte [rbp - 2], '3'
+
+  .is_background:
+
+  mov rcx, -1
+  mov rdx, 0  ; track if current_term_state was changed
+
+  .cmploop:
+    inc rcx
+    cmp rcx, 3
+    jge .endcmploop
+
+    ; compare current_term_state with cell
+    mov sil, byte [r12                      + rcx]
+    cmp sil, byte [current_term_state + rax + rcx]
+    je .cmploop
+
+    ; update current_term_state
+    mov byte [current_term_state + rax + rcx], sil
+    mov rdx, 1
+  jmp .cmploop
+
+  .endcmploop:
+
+  ; if current_term_state not changed then we can exit
+  cmp rdx, 0
+  je .exit
+
+  ; ansi escape sequence for changing color
+
+  mov rdi, output_buffer
+  mov byte [rbp - 1], 0x1b ; ESC
+  lea rsi, [rbp - 1]
+  call output_buffer_push
+
+  mov rdi, output_buffer
+  mov byte [rbp - 1], '['
+  lea rsi, [rbp - 1]
+  call output_buffer_push
+
+  mov rdi, output_buffer
+  lea rsi, [rbp - 2]
+  call output_buffer_push
+
+  mov rdi, output_buffer
+  mov byte [rbp - 1], '8'
+  lea rsi, [rbp - 1]
+  call output_buffer_push
+
+  mov rdi, output_buffer
+  mov byte [rbp - 1], ';'
+  lea rsi, [rbp - 1]
+  call output_buffer_push
+
+  mov rdi, output_buffer
+  mov byte [rbp - 1], '2'
+  lea rsi, [rbp - 1]
+  call output_buffer_push
+
+  ; not pushing ; here so it can be done in loop
+  ; since there is no ; after b and instead an m
+
+  ; convert r, g and b to ascii and push
+
+  mov byte [rbp - 2], -1
+
+  .conversionloop:
+    inc byte [rbp - 2]
+    cmp byte [rbp - 2], 3
+    jge .conversionend
+
+    ; previous delimiter
+    mov rdi, output_buffer
+    mov byte [rbp - 1], ';'
+    lea rsi, [rbp - 1]
+    call output_buffer_push
+
+    ; convert
+    movzx rax, byte [r12]
+
+    ; ascii offset = value * 3
+    mov rdi, rax
+    shl rdi, 1
+    add rdi, rax
+
+    mov sil, byte [uint8ASCII + rdi + 0]
+    mov byte [rbp - 3], sil
+    mov sil, byte [uint8ASCII + rdi + 1]
+    mov byte [rbp - 4], sil
+    mov sil, byte [uint8ASCII + rdi + 2]
+    mov byte [rbp - 5], sil
+
+    mov rdi, output_buffer
+    lea rsi, [rbp - 3]
+    call output_buffer_push
+    mov rdi, output_buffer
+    lea rsi, [rbp - 4]
+    call output_buffer_push
+    mov rdi, output_buffer
+    lea rsi, [rbp - 5]
+    call output_buffer_push
+
+    inc r12
+  jmp .conversionloop
+
+  .conversionend:
+  mov rdi, output_buffer
+  mov byte [rbp - 1], 'm'
+  lea rsi, [rbp - 1]
+  call output_buffer_push
+
+  .exit:
   mov rsp, rbp
+  pop r12
   pop rbp
   ret
 
@@ -283,7 +414,7 @@ generate_text:
   push rbp
   mov  rbp, rsp
 
-  sub rsp, 8
+  sub rsp, 16
 
   ; load text into stack memory
   mov al, byte [rdi + cell.text]
