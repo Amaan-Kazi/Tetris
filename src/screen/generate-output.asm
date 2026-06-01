@@ -412,26 +412,59 @@ generate_flags:
 ; arg1 rdi = &cell
 generate_text:
   push rbp
+  push r12
   mov  rbp, rsp
 
-  sub rsp, 16
+  sub rsp, 8
+  mov r12, rdi
 
-  ; load text into stack memory
-  mov al, byte [rdi + cell.text]
+  ; load first byte into stack memory
+  mov al, byte [r12 + cell.text]
   mov byte [rbp - 1], al
+
+  ; init counter
+  mov byte [rbp - 2], 0
+
+  ; check if first bit is 0 (most common case)
+  ; yes = push 1 byte and exit
+  ; no  = number of bytes is equal to 1s in first byte before first 0
+  test al, 0b10000000
+  jnz .pushloop
 
   ; push text
   mov rdi, output_buffer
-  lea rsi, [rbp - 1]
+  lea rsi, [r12 + cell.text]
   call output_buffer_push
+  jmp .exit
+
+  ; NOTE: lzcnt instruction could have been used for counting trailing 0s
+  ; (by using not for inverting 1s first)
+
+  .pushloop:
+    shl byte [rbp - 1], 1
+    jnc .exit
+
+    ; load counter
+    movzx rcx, byte [rbp - 2]
+
+    ; push text
+    mov rdi, output_buffer
+    lea rsi, [r12 + cell.text + rcx]
+    call output_buffer_push
+
+    inc byte [rbp - 2]
+  jmp .pushloop
 
   ; TODO: handle 2 wide / 0 wide character
+
+  .exit:
 
   ; not handling colum overflow so on next cell generation, generate_position()
   ; explicitly jumps to required row and col instead of relying on terminal line wrapping
   inc word [current_term_state + term_state.cursorx]
 
   mov rsp, rbp
+  pop r12
   pop rbp
   ret
 

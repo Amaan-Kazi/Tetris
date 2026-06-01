@@ -122,7 +122,9 @@ setup_screen:
   mov byte [rdi + rax + cell.text], 'l'
   mov byte [rdi + rax + cell.foregroundg], 255
   add rax, cell_size
-  mov byte [rdi + rax + cell.text], 'o'
+  mov byte [rdi + rax + cell.text + 0], 0b11100010
+  mov byte [rdi + rax + cell.text + 1], 0b10101101
+  mov byte [rdi + rax + cell.text + 2], 0b10010000
   mov byte [rdi + rax + cell.foregroundg], 255
 
   ; (y * width + x) * cell_size    [y is 1 so not multiplying]
@@ -145,7 +147,10 @@ setup_screen:
   mov byte [rdi + rax + cell.backgroundg], 148
   mov byte [rdi + rax + cell.backgroundb], 76
   add rax, cell_size
-  mov byte [rdi + rax + cell.text], 'd'
+  mov byte [rdi + rax + cell.text + 0], 0b11110000
+  mov byte [rdi + rax + cell.text + 1], 0b10011111
+  mov byte [rdi + rax + cell.text + 2], 0b10011000
+  mov byte [rdi + rax + cell.text + 3], 0b10000000
   mov byte [rdi + rax + cell.backgroundr], 45
   mov byte [rdi + rax + cell.backgroundg], 148
   mov byte [rdi + rax + cell.backgroundb], 76
