@@ -1,15 +1,18 @@
+%include "src/struct/color.mac"
+
+%ifndef TERM_STATE_DEFINED
+%define TERM_STATE_DEFINED
+
 struc term_state
-  .cursorx     resb 2 ; 0 indexed
-  .cursory     resb 2 ; 0 indexed
+  .cursorx    resb 2 ; 0 indexed
+  .cursory    resb 2 ; 0 indexed
 
-  .backgroundr resb 1
-  .backgroundg resb 1
-  .backgroundb resb 1
+  .background resb color_size
+  .foreground resb color_size
+  .underline  resb color_size
 
-  .foregroundr resb 1
-  .foregroundg resb 1
-  .foregroundb resb 1
-
-  .flags       resb 1
+  .flags      resb 2
 endstruc
+
+%endif
 

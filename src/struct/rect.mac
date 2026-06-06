@@ -1,3 +1,6 @@
+%ifndef RECT_DEFINED
+%define RECT_DEFINED
+
 ; x1 must be less than x2
 ; y1 must be less than y2
 struc rect
@@ -6,4 +9,6 @@ struc rect
   .x2 resb 2
   .y2 resb 2
 endstruc
+
+%endif
 

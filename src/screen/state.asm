@@ -22,6 +22,7 @@ extern disable_alt_buffer
 %include "src/struct/cell.mac"
 %include "src/struct/term-state.mac"
 %include "src/struct/rect.mac"
+%include "src/struct/color.mac"
 
 DEFINE_VECTOR screen, cell_size
 DEFINE_VECTOR output_buffer, 1
@@ -44,13 +45,9 @@ current_term_state: istruc term_state
   at term_state.cursorx,     dw 0
   at term_state.cursory,     dw 0
 
-  at term_state.backgroundr, db 0
-  at term_state.backgroundg, db 0
-  at term_state.backgroundb, db 0
-
-  at term_state.foregroundr, db 0
-  at term_state.foregroundg, db 0
-  at term_state.foregroundb, db 0
+  at term_state.background,  db 0, 0, 0
+  at term_state.foreground,  db 0, 0, 0
+  at term_state.underline,   db 0, 0, 0
 
   at term_state.flags,       db 0
 iend
@@ -111,21 +108,21 @@ setup_screen:
   mul rdx
 
   mov byte [rdi + rax + cell.text], 'H'
-  mov byte [rdi + rax + cell.foregroundr], 255
+  mov byte [rdi + rax + cell.foreground + color.r], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'e'
-  mov byte [rdi + rax + cell.foregroundr], 255
+  mov byte [rdi + rax + cell.foreground + color.r], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
-  mov byte [rdi + rax + cell.foregroundg], 255
+  mov byte [rdi + rax + cell.foreground + color.g], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
-  mov byte [rdi + rax + cell.foregroundg], 255
+  mov byte [rdi + rax + cell.foreground + color.g], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text + 0], 0b11100010
   mov byte [rdi + rax + cell.text + 1], 0b10101101
   mov byte [rdi + rax + cell.text + 2], 0b10010000
-  mov byte [rdi + rax + cell.foregroundg], 255
+  mov byte [rdi + rax + cell.foreground + color.g], 255
 
   ; (y * width + x) * cell_size    [y is 1 so not multiplying]
   mov   rax, cell_size
@@ -134,26 +131,26 @@ setup_screen:
   mul   rdx
 
   mov byte [rdi + rax + cell.text], 'W'
-  mov byte [rdi + rax + cell.foregroundb], 255
+  mov byte [rdi + rax + cell.foreground + color.b], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'o'
-  mov byte [rdi + rax + cell.foregroundb], 255
+  mov byte [rdi + rax + cell.foreground + color.b], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'r'
-  mov byte [rdi + rax + cell.foregroundb], 255
+  mov byte [rdi + rax + cell.foreground + color.b], 255
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
-  mov byte [rdi + rax + cell.backgroundr], 45
-  mov byte [rdi + rax + cell.backgroundg], 148
-  mov byte [rdi + rax + cell.backgroundb], 76
+  mov byte [rdi + rax + cell.background + color.r], 45
+  mov byte [rdi + rax + cell.background + color.g], 148
+  mov byte [rdi + rax + cell.background + color.b], 76
   add rax, cell_size
   mov byte [rdi + rax + cell.text + 0], 0b11110000
   mov byte [rdi + rax + cell.text + 1], 0b10011111
   mov byte [rdi + rax + cell.text + 2], 0b10011000
   mov byte [rdi + rax + cell.text + 3], 0b10000000
-  mov byte [rdi + rax + cell.backgroundr], 45
-  mov byte [rdi + rax + cell.backgroundg], 148
-  mov byte [rdi + rax + cell.backgroundb], 76
+  mov byte [rdi + rax + cell.background + color.r], 45
+  mov byte [rdi + rax + cell.background + color.g], 148
+  mov byte [rdi + rax + cell.background + color.b], 76
 
   ; last col (ws_col - 1) of first row (0)
   movzx rax, word [term.ws_col]
@@ -162,7 +159,7 @@ setup_screen:
   mul rdx
 
   mov byte [rdi + rax + cell.text], 'h'
-  mov byte [rdi + rax + cell.foregroundr], 255
+  mov byte [rdi + rax + cell.foreground + color.r], 255
 
   ; (y * width + x) * cell_size
   ; (1 * width + (width - 1)) * cell_size
@@ -175,7 +172,7 @@ setup_screen:
   mul rdx
 
   mov byte [rdi + rax + cell.text], 'i'
-  mov byte [rdi + rax + cell.foregroundr], 255
+  mov byte [rdi + rax + cell.foreground + color.r], 255
 
   mov word [rbp - 8 + rect.x1], 10
   mov word [rbp - 8 + rect.y1], 0

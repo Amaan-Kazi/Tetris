@@ -7,6 +7,8 @@
 ; name_push     Function to push to vector (automatic grow)
 ; name_reserve  Function to reserve memory for desired capacity
 
+%ifndef VECTOR_DEFINED
+%define VECTOR_DEFINED
 
 struc vector
   .data     resb 8
@@ -14,6 +16,7 @@ struc vector
   .capacity resb 8
 endstruc
 
+%endif
 
 %macro DEFINE_VECTOR 2
 ; %1 = vector name

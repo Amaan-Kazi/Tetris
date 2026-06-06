@@ -272,15 +272,15 @@ generate_color:
 
   sub rsp, 8
 
-  lea r12, [rdi + cell.backgroundr]
-  mov rax, term_state.backgroundr
+  lea r12, [rdi + cell.background]
+  mov rax, term_state.background
   mov byte [rbp - 2], '4'
 
   cmp sil, 1
   jne .is_background
 
-  lea r12, [rdi + cell.foregroundr]
-  mov rax, term_state.foregroundr
+  lea r12, [rdi + cell.foreground]
+  mov rax, term_state.foreground
   mov byte [rbp - 2], '3'
 
   .is_background:

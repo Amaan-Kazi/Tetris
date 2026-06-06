@@ -1,15 +1,18 @@
+%include "src/struct/color.mac"
+
+%ifndef CELL_DEFINED
+%define CELL_DEFINED
+
 struc cell
-  .text        resb 4
+  .text       resb 4
 
-  .backgroundr resb 1
-  .backgroundg resb 1
-  .backgroundb resb 1
+  .background resb color_size
+  .foreground resb color_size
+  .underline  resb color_size
 
-  .foregroundr resb 1
-  .foregroundg resb 1
-  .foregroundb resb 1
-
-  .width       resb 1
-  .flags       resb 1
+  .width      resb 1
+  .flags      resb 2
 endstruc
+
+%endif
 

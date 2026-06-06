@@ -1,0 +1,11 @@
+%ifndef COLOR_DEFINED
+%define COLOR_DEFINED
+
+struc color
+  .r resb 1
+  .g resb 1
+  .b resb 1
+endstruc
+
+%endif
+
