@@ -111,14 +111,17 @@ setup_screen:
   mov byte [rdi + rax + cell.text], 'H'
   mov byte [rdi + rax + cell.foreground + color.r], 255
   mov byte [rdi + rax + cell.underline_type], CELL_CURLY_UNDERLINE
+  mov byte [rdi + rax + cell.flags], CELL_BOLD
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'e'
   mov byte [rdi + rax + cell.foreground + color.r], 255
   mov byte [rdi + rax + cell.underline_type], CELL_CURLY_UNDERLINE
+  mov byte [rdi + rax + cell.flags], CELL_DIM
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
   mov byte [rdi + rax + cell.foreground + color.g], 255
   mov byte [rdi + rax + cell.underline_type], CELL_DOTTED_UNDERLINE
+  mov byte [rdi + rax + cell.flags], CELL_DIM | CELL_BOLD
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
   mov byte [rdi + rax + cell.foreground + color.g], 255
@@ -139,20 +142,24 @@ setup_screen:
   mov byte [rdi + rax + cell.text], 'W'
   mov byte [rdi + rax + cell.foreground + color.b], 255
   mov byte [rdi + rax + cell.underline_type], CELL_DASHED_UNDERLINE
+  mov byte [rdi + rax + cell.flags], CELL_BLINK | CELL_STRIKETHROUGH
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'o'
   mov byte [rdi + rax + cell.foreground + color.b], 255
   mov byte [rdi + rax + cell.underline_type], CELL_DASHED_UNDERLINE
+  mov byte [rdi + rax + cell.flags], CELL_BLINK | CELL_STRIKETHROUGH
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'r'
   mov byte [rdi + rax + cell.foreground + color.b], 255
   mov byte [rdi + rax + cell.underline_type], CELL_SINGLE_UNDERLINE
+  mov byte [rdi + rax + cell.flags], CELL_INVERSE | CELL_ITALIC | CELL_HIDDEN
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
   mov byte [rdi + rax + cell.background + color.r], 45
   mov byte [rdi + rax + cell.background + color.g], 148
   mov byte [rdi + rax + cell.background + color.b], 76
   mov byte [rdi + rax + cell.underline_type], CELL_SINGLE_UNDERLINE
+  mov byte [rdi + rax + cell.flags], CELL_BOLD| CELL_STRIKETHROUGH | CELL_ITALIC
   add rax, cell_size
   mov byte [rdi + rax + cell.text + 0], 0b11110000
   mov byte [rdi + rax + cell.text + 1], 0b10011111

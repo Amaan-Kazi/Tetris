@@ -469,7 +469,9 @@ generate_flags:
   cmp al, cl
   je .italic
 
-  ; reset intensity
+  ; reset intensity, if already done then no need to repeat
+  test byte [current_term_state + term_state.flags], CELL_BOLD | CELL_DIM
+  jz .bold
 
   mov  rdi, output_buffer
   mov  byte [rbp - 8], '2'
@@ -486,12 +488,9 @@ generate_flags:
   lea  rsi, [rbp - 8]
   call output_buffer_push
 
-  ; new intensity
-
-  ; bold
-    mov  al, r12b
-    test al, CELL_BOLD
-    jne .dim
+  .bold:
+    test r12b, CELL_BOLD
+    jz .dim
 
     mov  rdi, output_buffer
     mov  byte [rbp - 8], '1'
@@ -504,9 +503,8 @@ generate_flags:
     call output_buffer_push
 
   .dim:
-    mov  al, r12b
-    test al, CELL_DIM
-    jne .italic
+    test r12b, CELL_DIM
+    jz .italic
 
     mov  rdi, output_buffer
     mov  byte [rbp - 8], '2'
@@ -519,29 +517,124 @@ generate_flags:
     call output_buffer_push
 
   .italic:
-    mov  al, byte [rbp - 3]
-    test al, CELL_ITALIC
-    jne .blink
+    test byte [rbp - 3], CELL_ITALIC
+    jz .blink
+
+    test r12b, CELL_ITALIC
+    jnz .italic_code
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '2'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    .italic_code:
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '3'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
 
   .blink:
-    mov  al, byte [rbp - 3]
-    test al, CELL_BLINK
-    jne .inverse
+    test byte [rbp - 3], CELL_BLINK
+    jz .inverse
+
+    test r12b, CELL_BLINK
+    jnz .blink_code
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '2'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    .blink_code:
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '5'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
 
   .inverse:
-    mov  al, byte [rbp - 3]
-    test al, CELL_INVERSE
-    jne .hidden
+    test byte [rbp - 3], CELL_INVERSE
+    jz .hidden
+
+    test r12b, CELL_INVERSE
+    jnz .inverse_code
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '2'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    .inverse_code:
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '7'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
 
   .hidden:
-    mov  al, byte [rbp - 3]
-    test al, CELL_HIDDEN
-    jne .strikethrough
+    test byte [rbp - 3], CELL_HIDDEN
+    jz .strikethrough
+
+    test r12b, CELL_HIDDEN
+    jnz .hidden_code
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '2'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    .hidden_code:
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '8'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
 
   .strikethrough:
-    mov  al, byte [rbp - 3]
-    test al, CELL_STRIKETHROUGH
-    jne .underline_type
+    test byte [rbp - 3], CELL_STRIKETHROUGH
+    jz .underline_type
+
+    test r12b, CELL_STRIKETHROUGH
+    jnz .strikethrough_code
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '2'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    .strikethrough_code:
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '9'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
 
   .underline_type:
   mov dil, byte [rbp - 2]
