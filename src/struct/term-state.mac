@@ -4,14 +4,15 @@
 %define TERM_STATE_DEFINED
 
 struc term_state
-  .cursorx    resb 2 ; 0 indexed
-  .cursory    resb 2 ; 0 indexed
+  .cursorx        resb 2 ; 0 indexed
+  .cursory        resb 2 ; 0 indexed
 
-  .background resb color_size
-  .foreground resb color_size
-  .underline  resb color_size
+  .background     resb color_size
+  .foreground     resb color_size
+  .underline      resb color_size
 
-  .flags      resb 2
+  .flags          resb 1
+  .underline_type resb 1
 endstruc
 
 %endif

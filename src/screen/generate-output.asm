@@ -19,11 +19,14 @@ extern num_to_ascii
 %include "src/struct/rect.mac"
 %include "src/struct/term-state.mac"
 
+%include "src/util/cell-flags.mac"
+
 DEFINE_VECTOR rect_vec, rect_size
 
 
 section .bss
 rect_vec resb vector_size
+sgr_started resb 1
 
 
 section .rodata
@@ -80,8 +83,10 @@ generate_rect:
 global generate_cell
 generate_cell:
   push rbp
-  multipush r12, r13, r14, r14
+  multipush r12, r13, r14
   mov  rbp, rsp
+
+  sub rsp, 8
 
   mov r12, rdi
   mov r13, rsi
@@ -104,6 +109,8 @@ generate_cell:
   mov rsi, r13
   call generate_position
 
+  mov byte [sgr_started], 0
+
   mov rdi, r14
   mov rsi, 0   ; background
   call generate_color
@@ -113,13 +120,22 @@ generate_cell:
   call generate_color
 
   mov rdi, r14
-  call generate_text
-
-  mov rdi, r14
   call generate_flags
 
+  cmp byte [sgr_started], 0
+  je .generate_text
+
+  mov rdi, output_buffer
+  mov byte [rbp - 1], 'm'
+  lea rsi, [rbp - 1]
+  call output_buffer_push
+
+  .generate_text:
+  mov rdi, r14
+  call generate_text
+
   mov rsp, rbp
-  multipop r14, r14, r13, r12
+  multipop r14, r13, r12
   pop rbp
   ret
 
@@ -402,9 +418,223 @@ generate_color:
 ; arg1 rdi = &cell
 generate_flags:
   push rbp
+  push r12
   mov  rbp, rsp
 
+  sub rsp, 8
+
+  mov r12b, byte [rdi + cell.flags]
+  mov sil, byte [current_term_state + term_state.flags]
+  mov byte [rbp - 1], sil
+
+  mov dil, byte [rdi + cell.underline_type]
+  mov byte [rbp - 2], dil
+
+  ; any flag that is changed (enabled or disabled) will be set to 1
+  xor sil, r12b
+  mov byte [rbp - 3], sil
+
+  mov dil, byte [current_term_state + term_state.underline_type]
+  cmp dil, byte [rbp - 2]
+  jne .changed
+  
+  ; if nothing has changed, then exit
+  cmp sil, 0
+  je .exit
+
+  .changed:
+
+  cmp byte [sgr_started], 1
+  je .sgr_started
+    ; start SGR
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], 0x1b ; ESC
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '['
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+  mov byte [sgr_started], 1
+
+  .sgr_started:
+
+  mov al, CELL_BOLD | CELL_DIM
+  and al, r12b
+
+  mov cl, CELL_BOLD | CELL_DIM
+  and cl, byte [current_term_state + term_state.flags]
+
+  cmp al, cl
+  je .italic
+
+  ; reset intensity
+
+  mov  rdi, output_buffer
+  mov  byte [rbp - 8], '2'
+  lea  rsi, [rbp - 8]
+  call output_buffer_push
+
+  mov  rdi, output_buffer
+  mov  byte [rbp - 8], '2'
+  lea  rsi, [rbp - 8]
+  call output_buffer_push
+
+  mov  rdi, output_buffer
+  mov  byte [rbp - 8], ';'
+  lea  rsi, [rbp - 8]
+  call output_buffer_push
+
+  ; new intensity
+
+  ; bold
+    mov  al, r12b
+    test al, CELL_BOLD
+    jne .dim
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '1'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+  .dim:
+    mov  al, r12b
+    test al, CELL_DIM
+    jne .italic
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '2'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+  .italic:
+    mov  al, byte [rbp - 3]
+    test al, CELL_ITALIC
+    jne .blink
+
+  .blink:
+    mov  al, byte [rbp - 3]
+    test al, CELL_BLINK
+    jne .inverse
+
+  .inverse:
+    mov  al, byte [rbp - 3]
+    test al, CELL_INVERSE
+    jne .hidden
+
+  .hidden:
+    mov  al, byte [rbp - 3]
+    test al, CELL_HIDDEN
+    jne .strikethrough
+
+  .strikethrough:
+    mov  al, byte [rbp - 3]
+    test al, CELL_STRIKETHROUGH
+    jne .underline_type
+
+  .underline_type:
+  mov dil, byte [rbp - 2]
+  cmp dil, byte [current_term_state + term_state.underline_type]
+  je .underline_handled
+
+  cmp byte [rbp - 2], CELL_NO_UNDERLINE
+  jne .single_underline
+    ; No Underline
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '2'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '4'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+  jmp .underline_handled
+
+  .single_underline:
+  cmp byte [rbp - 2], CELL_SINGLE_UNDERLINE
+  jne .double_underline
+    ; Single Underline
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '4'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+  jmp .underline_handled
+
+  .double_underline:
+  cmp byte [rbp - 2], CELL_DOUBLE_UNDERLINE
+  jne .other_underline
+    ; Double Underline
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '2'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '1'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+  jmp .underline_handled
+
+  .other_underline:
+  cmp byte [rbp - 2], CELL_DASHED_UNDERLINE
+  ja .underline_handled ; invalid
+    ; Underlines are 4:3, 4:4 and 4:5
+    ; for curly, dotted and dashed respectivetly
+    ; 4:0, 4:1 and 4:2 are also available on new terminals
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], '4'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ':'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+    mov  rdi, output_buffer
+    mov  sil, '0'
+    add  sil, byte [rbp - 2]
+    mov  byte [rbp - 8], sil
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
+  .underline_handled:
+
+  ; update current_term_state
+  mov byte [current_term_state + term_state.flags], r12b
+  mov dil, byte [rbp - 2]
+  mov byte [current_term_state + term_state.underline_type], dil
+
+  .exit:
   mov rsp, rbp
+  pop r12
   pop rbp
   ret
 

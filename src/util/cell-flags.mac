@@ -1,0 +1,22 @@
+%ifndef CELL_FLAGS_DEFINED
+%define CELL_FLAGS_DEFINED
+
+%define CELL_BOLD              0b10000000
+%define CELL_DIM               0b01000000
+%define CELL_ITALIC            0b00100000
+
+%define CELL_BLINK             0b00010000
+
+%define CELL_INVERSE           0b00001000
+%define CELL_HIDDEN            0b00000100
+%define CELL_STRIKETHROUGH     0b00000010
+
+%define CELL_NO_UNDERLINE      0
+%define CELL_SINGLE_UNDERLINE  1
+%define CELL_DOUBLE_UNDERLINE  2
+%define CELL_CURLY_UNDERLINE   3
+%define CELL_DOTTED_UNDERLINE  4
+%define CELL_DASHED_UNDERLINE  5
+
+%endif
+

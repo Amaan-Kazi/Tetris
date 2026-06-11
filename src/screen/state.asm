@@ -23,6 +23,7 @@ extern disable_alt_buffer
 %include "src/struct/term-state.mac"
 %include "src/struct/rect.mac"
 %include "src/struct/color.mac"
+%include "src/util/cell-flags.mac"
 
 DEFINE_VECTOR screen, cell_size
 DEFINE_VECTOR output_buffer, 1
@@ -109,20 +110,25 @@ setup_screen:
 
   mov byte [rdi + rax + cell.text], 'H'
   mov byte [rdi + rax + cell.foreground + color.r], 255
+  mov byte [rdi + rax + cell.underline_type], CELL_CURLY_UNDERLINE
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'e'
   mov byte [rdi + rax + cell.foreground + color.r], 255
+  mov byte [rdi + rax + cell.underline_type], CELL_CURLY_UNDERLINE
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
   mov byte [rdi + rax + cell.foreground + color.g], 255
+  mov byte [rdi + rax + cell.underline_type], CELL_DOTTED_UNDERLINE
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
   mov byte [rdi + rax + cell.foreground + color.g], 255
+  mov byte [rdi + rax + cell.underline_type], CELL_DOTTED_UNDERLINE
   add rax, cell_size
   mov byte [rdi + rax + cell.text + 0], 0b11100010
   mov byte [rdi + rax + cell.text + 1], 0b10101101
   mov byte [rdi + rax + cell.text + 2], 0b10010000
   mov byte [rdi + rax + cell.foreground + color.g], 255
+  mov byte [rdi + rax + cell.underline_type], CELL_DOTTED_UNDERLINE
 
   ; (y * width + x) * cell_size    [y is 1 so not multiplying]
   mov   rax, cell_size
@@ -132,17 +138,21 @@ setup_screen:
 
   mov byte [rdi + rax + cell.text], 'W'
   mov byte [rdi + rax + cell.foreground + color.b], 255
+  mov byte [rdi + rax + cell.underline_type], CELL_DASHED_UNDERLINE
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'o'
   mov byte [rdi + rax + cell.foreground + color.b], 255
+  mov byte [rdi + rax + cell.underline_type], CELL_DASHED_UNDERLINE
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'r'
   mov byte [rdi + rax + cell.foreground + color.b], 255
+  mov byte [rdi + rax + cell.underline_type], CELL_SINGLE_UNDERLINE
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
   mov byte [rdi + rax + cell.background + color.r], 45
   mov byte [rdi + rax + cell.background + color.g], 148
   mov byte [rdi + rax + cell.background + color.b], 76
+  mov byte [rdi + rax + cell.underline_type], CELL_SINGLE_UNDERLINE
   add rax, cell_size
   mov byte [rdi + rax + cell.text + 0], 0b11110000
   mov byte [rdi + rax + cell.text + 1], 0b10011111
