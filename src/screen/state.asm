@@ -111,11 +111,13 @@ setup_screen:
   mov byte [rdi + rax + cell.text], 'H'
   mov byte [rdi + rax + cell.foreground + color.r], 255
   mov byte [rdi + rax + cell.underline_type], CELL_CURLY_UNDERLINE
+  mov byte [rdi + rax + cell.underline + color.g], 100
   mov byte [rdi + rax + cell.flags], CELL_BOLD
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'e'
   mov byte [rdi + rax + cell.foreground + color.r], 255
   mov byte [rdi + rax + cell.underline_type], CELL_CURLY_UNDERLINE
+  mov byte [rdi + rax + cell.underline + color.g], 100
   mov byte [rdi + rax + cell.flags], CELL_DIM
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'l'
@@ -126,12 +128,14 @@ setup_screen:
   mov byte [rdi + rax + cell.text], 'l'
   mov byte [rdi + rax + cell.foreground + color.g], 255
   mov byte [rdi + rax + cell.underline_type], CELL_DOTTED_UNDERLINE
+  mov byte [rdi + rax + cell.underline + color.b], 100
   add rax, cell_size
   mov byte [rdi + rax + cell.text + 0], 0b11100010
   mov byte [rdi + rax + cell.text + 1], 0b10101101
   mov byte [rdi + rax + cell.text + 2], 0b10010000
   mov byte [rdi + rax + cell.foreground + color.g], 255
   mov byte [rdi + rax + cell.underline_type], CELL_DOTTED_UNDERLINE
+  mov byte [rdi + rax + cell.underline + color.b], 100
   mov byte [rdi + rax + cell.width], CELL_WIDTH_2
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'x' ; shouldnt appear
@@ -140,6 +144,7 @@ setup_screen:
   add rax, cell_size
   mov byte [rdi + rax + cell.text], 'o'
   mov byte [rdi + rax + cell.foreground + color.r], 255
+  mov byte [rdi + rax + cell.underline + color.r], 100 ; should be ignored since no underline
 
   ; (y * width + x) * cell_size    [y is 1 so not multiplying]
   mov   rax, cell_size

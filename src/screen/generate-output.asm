@@ -124,6 +124,10 @@ generate_cell:
   call generate_color
 
   mov rdi, r14
+  mov rsi, 2   ; underline
+  call generate_color
+
+  mov rdi, r14
   call generate_flags
 
   cmp byte [sgr_started], 0
@@ -285,7 +289,7 @@ generate_position:
 
 
 ; arg1 rdi = &cell
-; arg2 rsi = bool isForeground, 0 to generate background, 1 to generate foreground
+; arg2 rsi = color, 0 = background, 1 = foreground, 2 = underline
 generate_color:
   push rbp
   push r12
@@ -293,18 +297,38 @@ generate_color:
 
   sub rsp, 8
 
-  lea r12, [rdi + cell.background]
-  mov rax, term_state.background
-  mov byte [rbp - 2], '4'
+  .background:
+    cmp sil, 0
+    jne .foreground
 
-  cmp sil, 1
-  jne .is_background
+    lea r12, [rdi + cell.background]
+    mov rax, term_state.background
+    mov byte [rbp - 2], '4'
+  jmp .color_selected
 
-  lea r12, [rdi + cell.foreground]
-  mov rax, term_state.foreground
-  mov byte [rbp - 2], '3'
+  .foreground:
+    cmp sil, 1
+    jne .underline
 
-  .is_background:
+    lea r12, [rdi + cell.foreground]
+    mov rax, term_state.foreground
+    mov byte [rbp - 2], '3'
+  jmp .color_selected
+
+  .underline:
+    cmp sil, 2
+    jne .exit
+
+    ; if cell has no underline then we can skip color
+    cmp byte [rdi + cell.underline_type], 0
+    je .exit
+
+    lea r12, [rdi + cell.underline]
+    mov rax, term_state.underline
+    mov byte [rbp - 2], '5'
+  jmp .color_selected
+
+  .color_selected:
 
   mov rcx, -1
   mov rdx, 0  ; track if current_term_state was changed
