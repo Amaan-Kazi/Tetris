@@ -720,6 +720,16 @@ generate_flags:
 
   .underline_handled:
 
+  ; if ; at end then remove it
+  mov rax, qword [output_buffer + vector.data]
+  mov rdx, qword [output_buffer + vector.size]
+  mov dil, byte  [rax + rdx - 1]
+
+  cmp dil, ';'
+  jne .no_semicolon
+  dec qword [output_buffer + vector.size]
+  .no_semicolon:
+
   ; update current_term_state
   mov byte [current_term_state + term_state.flags], r12b
   mov dil, byte [rbp - 2]
