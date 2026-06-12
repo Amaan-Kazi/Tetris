@@ -105,6 +105,10 @@ generate_cell:
   add rdi, rax
   mov r14, rdi
 
+  ; if cell.width is 0 then skip cell
+  cmp byte [rdi + cell.width], CELL_WIDTH_0
+  je .exit
+
   mov rdi, r12
   mov rsi, r13
   call generate_position
@@ -134,6 +138,7 @@ generate_cell:
   mov rdi, r14
   call generate_text
 
+  .exit:
   mov rsp, rbp
   multipop r14, r13, r12
   pop rbp
@@ -788,13 +793,18 @@ generate_text:
     inc byte [rbp - 2]
   jmp .pushloop
 
-  ; TODO: handle 2 wide / 0 wide character
-
   .exit:
+
+  ; handle character width
+  ; normal  cell becomes 1
+  ; wide    cell becomes 2
+  ; 0 space cell shouldnt reach this function
+  movzx di, byte [r12 + cell.width]
+  inc di
 
   ; not handling colum overflow so on next cell generation, generate_position()
   ; explicitly jumps to required row and col instead of relying on terminal line wrapping
-  inc word [current_term_state + term_state.cursorx]
+  add word [current_term_state + term_state.cursorx], di
 
   mov rsp, rbp
   pop r12

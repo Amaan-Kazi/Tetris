@@ -18,5 +18,9 @@
 %define CELL_DOTTED_UNDERLINE  4
 %define CELL_DASHED_UNDERLINE  5
 
+%define CELL_WIDTH_1           0
+%define CELL_WIDTH_2           1
+%define CELL_WIDTH_0           2
+
 %endif
 

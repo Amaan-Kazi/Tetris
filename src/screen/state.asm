@@ -132,6 +132,14 @@ setup_screen:
   mov byte [rdi + rax + cell.text + 2], 0b10010000
   mov byte [rdi + rax + cell.foreground + color.g], 255
   mov byte [rdi + rax + cell.underline_type], CELL_DOTTED_UNDERLINE
+  mov byte [rdi + rax + cell.width], CELL_WIDTH_2
+  add rax, cell_size
+  mov byte [rdi + rax + cell.text], 'x' ; shouldnt appear
+  mov byte [rdi + rax + cell.foreground + color.r], 255
+  mov byte [rdi + rax + cell.width], CELL_WIDTH_0
+  add rax, cell_size
+  mov byte [rdi + rax + cell.text], 'o'
+  mov byte [rdi + rax + cell.foreground + color.r], 255
 
   ; (y * width + x) * cell_size    [y is 1 so not multiplying]
   mov   rax, cell_size
@@ -168,6 +176,14 @@ setup_screen:
   mov byte [rdi + rax + cell.background + color.r], 45
   mov byte [rdi + rax + cell.background + color.g], 148
   mov byte [rdi + rax + cell.background + color.b], 76
+  mov byte [rdi + rax + cell.width], CELL_WIDTH_2
+  add rax, cell_size
+  mov byte [rdi + rax + cell.foreground + color.r], 255
+  mov byte [rdi + rax + cell.text], 'x' ; shouldnt appear
+  mov byte [rdi + rax + cell.width], CELL_WIDTH_0
+  add rax, cell_size
+  mov byte [rdi + rax + cell.foreground + color.r], 255
+  mov byte [rdi + rax + cell.text], 'd'
 
   ; last col (ws_col - 1) of first row (0)
   movzx rax, word [term.ws_col]
@@ -193,7 +209,7 @@ setup_screen:
 
   mov word [rbp - 8 + rect.x1], 10
   mov word [rbp - 8 + rect.y1], 0
-  mov word [rbp - 8 + rect.x2], 14
+  mov word [rbp - 8 + rect.x2], 16
   mov word [rbp - 8 + rect.y2], 1
 
   lea rdi, [rbp - 8]
