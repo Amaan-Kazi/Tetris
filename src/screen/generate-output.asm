@@ -431,15 +431,25 @@ generate_color:
     mov sil, byte [uint8ASCII + rdi + 2]
     mov byte [rbp - 5], sil
 
-    mov rdi, output_buffer
-    lea rsi, [rbp - 3]
-    call output_buffer_push
-    mov rdi, output_buffer
-    lea rsi, [rbp - 4]
-    call output_buffer_push
-    mov rdi, output_buffer
-    lea rsi, [rbp - 5]
-    call output_buffer_push
+    ; skip starting 0s
+
+    cmp byte [r12], 100
+    jb .2digit
+      mov rdi, output_buffer
+      lea rsi, [rbp - 3]
+      call output_buffer_push
+
+    .2digit:
+    cmp byte [r12], 10
+    jb .1digit
+      mov rdi, output_buffer
+      lea rsi, [rbp - 4]
+      call output_buffer_push
+
+    .1digit:
+      mov rdi, output_buffer
+      lea rsi, [rbp - 5]
+      call output_buffer_push
 
     ; delimiter
     mov rdi, output_buffer
