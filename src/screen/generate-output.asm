@@ -130,13 +130,24 @@ generate_cell:
   mov rdi, r14
   call generate_flags
 
+  ; if sgr_started, then we must end it with m
   cmp byte [sgr_started], 0
   je .generate_text
+    ; if ; at end then remove it
+    mov rax, qword [output_buffer + vector.data]
+    mov rdx, qword [output_buffer + vector.size]
+    mov dil, byte  [rax + rdx - 1]
 
-  mov rdi, output_buffer
-  mov byte [rbp - 1], 'm'
-  lea rsi, [rbp - 1]
-  call output_buffer_push
+    cmp dil, ';'
+    jne .no_semicolon
+      mov byte [rax + rdx - 1], 'm'
+      jmp .generate_text
+
+    .no_semicolon:
+    mov rdi, output_buffer
+    mov byte [rbp - 1], 'm'
+    lea rsi, [rbp - 1]
+    call output_buffer_push
 
   .generate_text:
   mov rdi, r14
@@ -330,7 +341,7 @@ generate_color:
 
   .color_selected:
 
-  mov rcx, -1
+  mov rcx, -1 ; counter
   mov rdx, 0  ; track if current_term_state was changed
 
   .cmploop:
@@ -354,17 +365,23 @@ generate_color:
   cmp rdx, 0
   je .exit
 
+  ; start sgr if not done already
+  cmp byte [sgr_started], 1
+  je .sgr_started
+    mov rdi, output_buffer
+    mov byte [rbp - 1], 0x1b ; ESC
+    lea rsi, [rbp - 1]
+    call output_buffer_push
+
+    mov rdi, output_buffer
+    mov byte [rbp - 1], '['
+    lea rsi, [rbp - 1]
+    call output_buffer_push
+
+    mov byte [sgr_started], 1
+  .sgr_started:
+
   ; ansi escape sequence for changing color
-
-  mov rdi, output_buffer
-  mov byte [rbp - 1], 0x1b ; ESC
-  lea rsi, [rbp - 1]
-  call output_buffer_push
-
-  mov rdi, output_buffer
-  mov byte [rbp - 1], '['
-  lea rsi, [rbp - 1]
-  call output_buffer_push
 
   mov rdi, output_buffer
   lea rsi, [rbp - 2]
@@ -385,23 +402,19 @@ generate_color:
   lea rsi, [rbp - 1]
   call output_buffer_push
 
-  ; not pushing ; here so it can be done in loop
-  ; since there is no ; after b and instead an m
+  mov rdi, output_buffer
+  mov byte [rbp - 1], ';'
+  lea rsi, [rbp - 1]
+  call output_buffer_push
 
   ; convert r, g and b to ascii and push
 
-  mov byte [rbp - 2], -1
+  mov byte [rbp - 2], -1 ; counter
 
   .conversionloop:
     inc byte [rbp - 2]
     cmp byte [rbp - 2], 3
-    jge .conversionend
-
-    ; previous delimiter
-    mov rdi, output_buffer
-    mov byte [rbp - 1], ';'
-    lea rsi, [rbp - 1]
-    call output_buffer_push
+    jge .exit
 
     ; convert
     movzx rax, byte [r12]
@@ -428,14 +441,14 @@ generate_color:
     lea rsi, [rbp - 5]
     call output_buffer_push
 
+    ; delimiter
+    mov rdi, output_buffer
+    mov byte [rbp - 1], ';'
+    lea rsi, [rbp - 1]
+    call output_buffer_push
+
     inc r12
   jmp .conversionloop
-
-  .conversionend:
-  mov rdi, output_buffer
-  mov byte [rbp - 1], 'm'
-  lea rsi, [rbp - 1]
-  call output_buffer_push
 
   .exit:
   mov rsp, rbp
@@ -747,17 +760,12 @@ generate_flags:
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
+    mov  rdi, output_buffer
+    mov  byte [rbp - 8], ';'
+    lea  rsi, [rbp - 8]
+    call output_buffer_push
+
   .underline_handled:
-
-  ; if ; at end then remove it
-  mov rax, qword [output_buffer + vector.data]
-  mov rdx, qword [output_buffer + vector.size]
-  mov dil, byte  [rax + rdx - 1]
-
-  cmp dil, ';'
-  jne .no_semicolon
-  dec qword [output_buffer + vector.size]
-  .no_semicolon:
 
   ; update current_term_state
   mov byte [current_term_state + term_state.flags], r12b
