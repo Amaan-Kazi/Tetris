@@ -13,6 +13,7 @@ struc term_state
 
   .flags          resb 1
   .underline_type resb 1
+  .padding1       resb 1
 endstruc
 
 %endif

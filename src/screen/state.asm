@@ -16,6 +16,9 @@ extern debug_fd
 ; terminal/alternate-buffer
 extern disable_alt_buffer
 
+; util/reset-screen
+extern reset_screen
+
 
 %include "src/util/vector.mac"
 
@@ -43,14 +46,16 @@ section .data
 
 global current_term_state
 current_term_state: istruc term_state
-  at term_state.cursorx,     dw 0
-  at term_state.cursory,     dw 0
+  at term_state.cursorx,        dw 0
+  at term_state.cursory,        dw 0
 
-  at term_state.background,  db 0, 0, 0
-  at term_state.foreground,  db 0, 0, 0
-  at term_state.underline,   db 0, 0, 0
+  at term_state.background,     db 0, 0, 0
+  at term_state.foreground,     db 0, 0, 0
+  at term_state.underline,      db 0, 0, 0
 
-  at term_state.flags,       db 0
+  at term_state.flags,          db 0
+  at term_state.underline_type, db 0
+  at term_state.padding1,       db 0
 iend
 
 stdout_error db "ERROR: stdout is not a terminal", 0x0A
@@ -101,6 +106,8 @@ setup_screen:
   mov  rdi, output_buffer
   mov  rsi, 4096
   call output_buffer_init
+
+  call reset_screen
 
   ; render test
   mov rdi, qword [screen + vector.data]
