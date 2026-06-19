@@ -5,6 +5,9 @@ extern disable_alt_buffer
 ; screen/main-menu/main-menu
 extern main_menu
 
+; util/time
+extern calibrate_tsc_frequency
+
 
 section .data
 arg_debug db "--debug", 0x0 ; \0
@@ -76,6 +79,8 @@ _start:
 
 
   .arg_check_complete:
+
+  call calibrate_tsc_frequency
 
   call enable_alt_buffer
 
