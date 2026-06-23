@@ -1,3 +1,5 @@
+default rel
+
 ; terminal/alternate-buffer
 extern enable_alt_buffer
 extern disable_alt_buffer
@@ -36,7 +38,7 @@ _start:
   cmp rdx, 1
   jbe .arg_check_complete
 
-  mov rdi, arg_debug
+  lea rdi, [arg_debug]
   mov rsi, [rsp + 16]
 
   ; check if arg1 is --debug
@@ -53,10 +55,10 @@ _start:
     cmp al, 0
   jne .debug_check_loop
 
-  mov rax, 2          ; SYS_open
-  mov rdi, debug_file ; filename
-  mov rsi, 0x641      ; flags = O_APPEND (0x400) | O_TRUNC (0x200) | O_CREAT (0x040) | O_WRONLY (0x001)
-  mov rdx, 0o644      ; mode
+  mov rax, 2            ; SYS_open
+  lea rdi, [debug_file] ; filename
+  mov rsi, 0x641        ; flags = O_APPEND (0x400) | O_TRUNC (0x200) | O_CREAT (0x040) | O_WRONLY (0x001)
+  mov rdx, 0o644        ; mode
   syscall
 
   cmp rax, 0
@@ -64,7 +66,7 @@ _start:
 
   mov rax, 1 ; SYS_write
   mov rdi, 2 ; stderr
-  mov rsi, debug_file_error
+  lea rsi, [debug_file_error]
   mov rdx, debug_file_error_length
   syscall
 

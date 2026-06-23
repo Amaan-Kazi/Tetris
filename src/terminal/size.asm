@@ -1,3 +1,5 @@
+default rel
+
 ; https://www.man7.org/linux/man-pages/man2/TIOCGWINSZ.2const.html
 global term
 global term.ws_row
@@ -25,7 +27,7 @@ term_get_size:
   mov rax, 16      ; ioctl
   mov rdi, 1       ; fd  = stdout
   mov rsi, 0x5413  ; cmd = TIOCGWINSZ
-  mov rdx, term
+  lea rdx, [term]
   syscall
 
   ; mov rax, qword [winsize] ; return entire winsize in 64bit register

@@ -1,3 +1,5 @@
+default rel
+
 ; terminal/size
 extern term_get_size
 extern term.ws_row
@@ -82,7 +84,7 @@ setup_screen:
 
   mov rax, 1 ; SYS_write
   mov rdi, 2 ; stderr
-  mov rsi, stdout_error
+  lea rsi, [stdout_error]
   mov rdx, stdout_error_length
   syscall
 
@@ -98,12 +100,12 @@ setup_screen:
   mul   rdx
 
   ; init vector with buffer size preallocated
-  mov  rdi, screen
+  lea  rdi, [screen]
   mov  rsi, rax
   call screen_init
 
   ; init output buffer with a page preallolcated
-  mov  rdi, output_buffer
+  lea  rdi, [output_buffer]
   mov  rsi, 4096
   call output_buffer_init
 
@@ -275,7 +277,7 @@ screen_change_handler:
   mul   rdx
 
   ; reserve buffer size in vector
-  mov  rdi, screen
+  lea  rdi, [screen]
   mov  rsi, rax
   call screen_reserve
 

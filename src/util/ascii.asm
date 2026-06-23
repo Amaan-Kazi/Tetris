@@ -1,3 +1,5 @@
+default rel
+
 section .text
 
 ; Convert signed or unsigned 64bit number to ASCII string

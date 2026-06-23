@@ -1,3 +1,5 @@
+default rel
+
 section .data
 
 align 8

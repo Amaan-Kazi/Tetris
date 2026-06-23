@@ -1,3 +1,5 @@
+default rel
+
 section .data
 ; https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands
 
@@ -19,7 +21,7 @@ enable_alt_buffer:
 
   mov rax, 1 ; write
   mov edi, 1 ; stdout
-  mov rsi, enable
+  lea rsi, [enable]
   mov rdx, length1
   syscall
 
@@ -34,7 +36,7 @@ disable_alt_buffer:
 
   mov rax, 1 ; write
   mov edi, 1 ; stdout
-  mov rsi, disable
+  lea rsi, [disable]
   mov rdx, length2
   syscall
 

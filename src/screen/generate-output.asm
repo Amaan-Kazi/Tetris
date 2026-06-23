@@ -1,8 +1,9 @@
+default rel
+
 ; screen/state
 extern screen
 extern output_buffer
 extern output_buffer_push
-extern debug_mode
 extern current_term_state
 
 ; terminal/size
@@ -144,7 +145,7 @@ generate_cell:
       jmp .generate_text
 
     .no_semicolon:
-    mov rdi, output_buffer
+    lea rdi, [output_buffer]
     mov byte [rbp - 1], 'm'
     lea rsi, [rbp - 1]
     call output_buffer_push
@@ -175,17 +176,16 @@ generate_position:
   mov qword [rbp - 16], rsi
 
   ; check if row has changed
-  mov   rdi, current_term_state
-  movzx rdi, word [rdi + term_state.cursory]
+  movzx rdi, word [current_term_state + term_state.cursory]
   cmp   rdi, rsi
   je   .row_equal
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 48], 0x1b ; ESC
   lea rsi, [rbp - 48]
   call output_buffer_push
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 48], '['
   lea rsi, [rbp - 48]
   call output_buffer_push
@@ -201,7 +201,7 @@ generate_position:
   mov r13, rax
   mov r12, 0
   .ycopyloop:
-    mov rdi, output_buffer
+    lea rdi, [output_buffer]
     lea rsi, [rbp - 36 + r12]
     call output_buffer_push
 
@@ -209,7 +209,7 @@ generate_position:
     cmp r12, r13
   jl .ycopyloop
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 48], ';'
   lea rsi, [rbp - 48]
   call output_buffer_push
@@ -225,7 +225,7 @@ generate_position:
   mov r13, rax
   mov r12, 0
   .xcopyloop:
-    mov rdi, output_buffer
+    lea rdi, [output_buffer]
     lea rsi, [rbp - 36 + r12]
     call output_buffer_push
 
@@ -233,7 +233,7 @@ generate_position:
     cmp r12, r13
   jl .xcopyloop
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 48], 'H'
   lea rsi, [rbp - 48]
   call output_buffer_push
@@ -254,12 +254,12 @@ generate_position:
   cmp   rdi, qword [rbp - 8]
   je   .exit
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 48], 0x1b ; ESC
   lea rsi, [rbp - 48]
   call output_buffer_push
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 48], '['
   lea rsi, [rbp - 48]
   call output_buffer_push
@@ -275,7 +275,7 @@ generate_position:
   mov r13, rax
   mov r12, 0
   .xcopyloop2:
-    mov rdi, output_buffer
+    lea rdi, [output_buffer]
     lea rsi, [rbp - 36 + r12]
     call output_buffer_push
 
@@ -283,7 +283,7 @@ generate_position:
     cmp r12, r13
   jl .xcopyloop2
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 48], 'G'
   lea rsi, [rbp - 48]
   call output_buffer_push
@@ -343,19 +343,25 @@ generate_color:
 
   mov rcx, -1 ; counter
   mov rdx, 0  ; track if current_term_state was changed
+  lea r8, [current_term_state]
 
   .cmploop:
     inc rcx
     cmp rcx, 3
     jge .endcmploop
 
+    ; compute address of current_term_state.color_type.value in r9
+    mov r9, r8
+    add r9, rax ; foreground / background / underline
+    add r9, rcx ; r / g / b
+
     ; compare current_term_state with cell
-    mov sil, byte [r12                      + rcx]
-    cmp sil, byte [current_term_state + rax + rcx]
+    mov sil, byte [r12 + rcx]
+    cmp sil, byte [r9]
     je .cmploop
 
     ; update current_term_state
-    mov byte [current_term_state + rax + rcx], sil
+    mov byte [r9], sil
     mov rdx, 1
   jmp .cmploop
 
@@ -368,12 +374,12 @@ generate_color:
   ; start sgr if not done already
   cmp byte [sgr_started], 1
   je .sgr_started
-    mov rdi, output_buffer
+    lea rdi, [output_buffer]
     mov byte [rbp - 1], 0x1b ; ESC
     lea rsi, [rbp - 1]
     call output_buffer_push
 
-    mov rdi, output_buffer
+    lea rdi, [output_buffer]
     mov byte [rbp - 1], '['
     lea rsi, [rbp - 1]
     call output_buffer_push
@@ -383,26 +389,26 @@ generate_color:
 
   ; ansi escape sequence for changing color
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   lea rsi, [rbp - 2]
   call output_buffer_push
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 1], '8'
   lea rsi, [rbp - 1]
   call output_buffer_push
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 1], ';'
   lea rsi, [rbp - 1]
   call output_buffer_push
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 1], '2'
   lea rsi, [rbp - 1]
   call output_buffer_push
 
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   mov byte [rbp - 1], ';'
   lea rsi, [rbp - 1]
   call output_buffer_push
@@ -410,6 +416,7 @@ generate_color:
   ; convert r, g and b to ascii and push
 
   mov byte [rbp - 2], -1 ; counter
+  lea r9, [uint8ASCII]
 
   .conversionloop:
     inc byte [rbp - 2]
@@ -424,35 +431,35 @@ generate_color:
     shl rdi, 1
     add rdi, rax
 
-    mov sil, byte [uint8ASCII + rdi + 0]
+    mov sil, byte [r9 + rdi + 0]
     mov byte [rbp - 3], sil
-    mov sil, byte [uint8ASCII + rdi + 1]
+    mov sil, byte [r9 + rdi + 1]
     mov byte [rbp - 4], sil
-    mov sil, byte [uint8ASCII + rdi + 2]
+    mov sil, byte [r9 + rdi + 2]
     mov byte [rbp - 5], sil
 
     ; skip starting 0s
 
     cmp byte [r12], 100
     jb .2digit
-      mov rdi, output_buffer
+      lea rdi, [output_buffer]
       lea rsi, [rbp - 3]
       call output_buffer_push
 
     .2digit:
     cmp byte [r12], 10
     jb .1digit
-      mov rdi, output_buffer
+      lea rdi, [output_buffer]
       lea rsi, [rbp - 4]
       call output_buffer_push
 
     .1digit:
-      mov rdi, output_buffer
+      lea rdi, [output_buffer]
       lea rsi, [rbp - 5]
       call output_buffer_push
 
     ; delimiter
-    mov rdi, output_buffer
+    lea rdi, [output_buffer]
     mov byte [rbp - 1], ';'
     lea rsi, [rbp - 1]
     call output_buffer_push
@@ -489,7 +496,7 @@ generate_flags:
   mov dil, byte [current_term_state + term_state.underline_type]
   cmp dil, byte [rbp - 2]
   jne .changed
-  
+
   ; if nothing has changed, then exit
   cmp sil, 0
   je .exit
@@ -499,12 +506,12 @@ generate_flags:
   cmp byte [sgr_started], 1
   je .sgr_started
     ; start SGR
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], 0x1b ; ESC
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '['
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -525,17 +532,17 @@ generate_flags:
   test byte [current_term_state + term_state.flags], CELL_BOLD | CELL_DIM
   jz .bold
 
-  mov  rdi, output_buffer
+  lea  rdi, [output_buffer]
   mov  byte [rbp - 8], '2'
   lea  rsi, [rbp - 8]
   call output_buffer_push
 
-  mov  rdi, output_buffer
+  lea  rdi, [output_buffer]
   mov  byte [rbp - 8], '2'
   lea  rsi, [rbp - 8]
   call output_buffer_push
 
-  mov  rdi, output_buffer
+  lea  rdi, [output_buffer]
   mov  byte [rbp - 8], ';'
   lea  rsi, [rbp - 8]
   call output_buffer_push
@@ -544,12 +551,12 @@ generate_flags:
     test r12b, CELL_BOLD
     jz .dim
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '1'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -558,12 +565,12 @@ generate_flags:
     test r12b, CELL_DIM
     jz .italic
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '2'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -575,19 +582,19 @@ generate_flags:
     test r12b, CELL_ITALIC
     jnz .italic_code
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '2'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
     .italic_code:
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '3'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -599,19 +606,19 @@ generate_flags:
     test r12b, CELL_BLINK
     jnz .blink_code
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '2'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
     .blink_code:
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '5'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -623,19 +630,19 @@ generate_flags:
     test r12b, CELL_INVERSE
     jnz .inverse_code
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '2'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
     .inverse_code:
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '7'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -647,19 +654,19 @@ generate_flags:
     test r12b, CELL_HIDDEN
     jnz .hidden_code
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '2'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
     .hidden_code:
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '8'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -671,19 +678,19 @@ generate_flags:
     test r12b, CELL_STRIKETHROUGH
     jnz .strikethrough_code
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '2'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
     .strikethrough_code:
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '9'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -696,17 +703,17 @@ generate_flags:
   cmp byte [rbp - 2], CELL_NO_UNDERLINE
   jne .single_underline
     ; No Underline
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '2'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '4'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -716,12 +723,12 @@ generate_flags:
   cmp byte [rbp - 2], CELL_SINGLE_UNDERLINE
   jne .double_underline
     ; Single Underline
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '4'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -731,17 +738,17 @@ generate_flags:
   cmp byte [rbp - 2], CELL_DOUBLE_UNDERLINE
   jne .other_underline
     ; Double Underline
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '2'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '1'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -753,24 +760,24 @@ generate_flags:
     ; Underlines are 4:3, 4:4 and 4:5
     ; for curly, dotted and dashed respectivetly
     ; 4:0, 4:1 and 4:2 are also available on new terminals
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], '4'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ':'
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  sil, '0'
     add  sil, byte [rbp - 2]
     mov  byte [rbp - 8], sil
     lea  rsi, [rbp - 8]
     call output_buffer_push
 
-    mov  rdi, output_buffer
+    lea  rdi, [output_buffer]
     mov  byte [rbp - 8], ';'
     lea  rsi, [rbp - 8]
     call output_buffer_push
@@ -812,7 +819,7 @@ generate_text:
   jnz .pushloop
 
   ; push text
-  mov rdi, output_buffer
+  lea rdi, [output_buffer]
   lea rsi, [r12 + cell.text]
   call output_buffer_push
   jmp .exit
@@ -828,7 +835,7 @@ generate_text:
     movzx rcx, byte [rbp - 2]
 
     ; push text
-    mov rdi, output_buffer
+    lea rdi, [output_buffer]
     lea rsi, [r12 + cell.text + rcx]
     call output_buffer_push
 

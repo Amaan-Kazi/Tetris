@@ -1,3 +1,5 @@
+default rel
+
 ; main
 extern debug_mode
 extern debug_fd
@@ -229,7 +231,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg1
+  lea rsi, [msg1]
   mov rdx, msg1_len
   syscall
 
@@ -246,7 +248,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg2
+  lea rsi, [msg2]
   mov rdx, msg2_len
   syscall
 
@@ -263,7 +265,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg3
+  lea rsi, [msg3]
   mov rdx, msg3_len
   syscall
 
@@ -280,7 +282,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg4
+  lea rsi, [msg4]
   mov rdx, msg4_len
   syscall
 
@@ -297,7 +299,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg5
+  lea rsi, [msg5]
   mov rdx, msg5_len
   syscall
 
@@ -314,7 +316,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg6
+  lea rsi, [msg6]
   mov rdx, msg6_len
   syscall
 
@@ -331,7 +333,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg7
+  lea rsi, [msg7]
   mov rdx, msg7_len
   syscall
 
@@ -348,7 +350,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg8
+  lea rsi, [msg8]
   mov rdx, msg8_len
   syscall
 
@@ -365,7 +367,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg9
+  lea rsi, [msg9]
   mov rdx, msg9_len
   syscall
 
@@ -382,7 +384,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg10
+  lea rsi, [msg10]
   mov rdx, msg10_len
   syscall
 
@@ -399,7 +401,7 @@ calibrate_tsc_frequency:
 
   mov rax, 1
   mov rdi, qword [debug_fd]
-  mov rsi, msg11
+  lea rsi, [msg11]
   mov rdx, msg11_len
   syscall
 

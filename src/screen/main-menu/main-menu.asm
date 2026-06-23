@@ -1,3 +1,5 @@
+default rel
+
 ; signal/set-handler
 extern set_signal_handler
 
@@ -25,12 +27,12 @@ main_menu:
 
   ; Set Interrupt Handler
   mov  rdi, SIGINT
-  mov  rsi, sigint_handler
+  lea  rsi, [sigint_handler]
   call set_signal_handler
 
   ; Set Window Handler
   mov  rdi, SIGWINCH
-  mov  rsi, sigwinch_handler
+  lea  rsi, [sigwinch_handler]
   call set_signal_handler
 
   .infiniteLoop:

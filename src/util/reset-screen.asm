@@ -1,3 +1,5 @@
+default rel
+
 ; screen/state
 extern current_term_state
 
@@ -49,7 +51,7 @@ reset_screen:
   ; print reset_string
   mov rax, 1 ; write
   mov rdi, 1 ; stdout
-  mov rsi, reset_string
+  lea rsi, [reset_string]
   mov rdx, reset_string_length
   syscall
 
