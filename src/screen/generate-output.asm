@@ -249,7 +249,7 @@ generate_position:
   .row_equal:
 
   ; check if col has changed
-  mov   rdi, current_term_state
+  lea   rdi, [current_term_state]
   movzx rdi, word [rdi + term_state.cursorx]
   cmp   rdi, qword [rbp - 8]
   je   .exit

@@ -12,7 +12,7 @@ all: $(TARGET)
 # Link everything
 $(TARGET): $(OBJ)
 	mkdir -p build
-	ld $(OBJ) -o $(TARGET)
+	gcc -nostdlib -nodefaultlibs -nostartfiles -pie $(OBJ) -o $(TARGET)
 
 # Compile each .asm → .o (preserve structure)
 build/%.o: src/%.asm

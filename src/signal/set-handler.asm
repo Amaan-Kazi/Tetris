@@ -24,7 +24,7 @@ set_signal_handler:
   ; sys_rt_sigaction
   mov rax, 13
   ; signum is already in edi
-  mov rsi, sigaction
+  lea rsi, [sigaction]
   mov rdx, 0 ; oldact = NULL
   mov r10, 8 ; sigsetsize = sizeof(kernel_sigset_t)
   syscall
