@@ -1,12 +1,12 @@
 default rel
 
-; screen/state
+; renderer/terminal/state
 extern screen
 extern output_buffer
 extern output_buffer_push
 extern current_term_state
 
-; terminal/size
+; renderer/terminal/size
 extern term.ws_col
 
 ; util/ascii
@@ -16,11 +16,11 @@ extern num_to_ascii
 %include "src/util/multi-push-pop.mac"
 %include "src/util/vector.mac"
 
-%include "src/struct/cell.mac"
-%include "src/struct/rect.mac"
-%include "src/struct/term-state.mac"
+%include "src/renderer/terminal/cell/cell.mac"
+%include "src/renderer/terminal/rect.mac"
+%include "src/renderer/terminal/term-state.mac"
 
-%include "src/util/cell-flags.mac"
+%include "src/renderer/terminal/cell/flags.mac"
 
 DEFINE_VECTOR rect_vec, rect_size
 

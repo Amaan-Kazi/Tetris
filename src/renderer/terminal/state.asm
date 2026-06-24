@@ -1,6 +1,6 @@
 default rel
 
-; terminal/size
+; renderer/terminal/size
 extern term_get_size
 extern term.ws_row
 extern term.ws_col
@@ -8,27 +8,27 @@ extern term.ws_col
 ; util/ascii
 extern num_to_ascii
 
-; screen/generate-output
+; renderer/terminal/generate-output
 extern generate_rect
 
 ; main
 extern debug_mode
 extern debug_fd
 
-; terminal/alternate-buffer
+; renderer/terminal/alternate-buffer
 extern disable_alt_buffer
 
-; util/reset-screen
+; renderer/terminal/reset-screen
 extern reset_screen
 
 
 %include "src/util/vector.mac"
 
-%include "src/struct/cell.mac"
-%include "src/struct/term-state.mac"
-%include "src/struct/rect.mac"
-%include "src/struct/color.mac"
-%include "src/util/cell-flags.mac"
+%include "src/renderer/terminal/cell/cell.mac"
+%include "src/renderer/terminal/term-state.mac"
+%include "src/renderer/terminal/rect.mac"
+%include "src/renderer/terminal/cell/color.mac"
+%include "src/renderer/terminal/cell/flags.mac"
 
 DEFINE_VECTOR screen, cell_size
 DEFINE_VECTOR output_buffer, 1

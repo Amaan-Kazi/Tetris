@@ -1,10 +1,10 @@
 default rel
 
-; screen/state
+; renderer/terminal/state
 extern current_term_state
 
-%include "src/struct/term-state.mac"
-%include "src/util/cell-flags.mac"
+%include "src/renderer/terminal/term-state.mac"
+%include "src/renderer/terminal/cell/flags.mac"
 
 
 section .data

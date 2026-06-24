@@ -1,9 +1,9 @@
 default rel
 
-; signal/set-handler
+; os/set-signal-handler
 extern set_signal_handler
 
-; screen/state
+; renderer/terminal/state
 extern setup_screen
 extern screen_change_handler
 

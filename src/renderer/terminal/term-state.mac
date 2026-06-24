@@ -1,4 +1,4 @@
-%include "src/struct/color.mac"
+%include "src/renderer/terminal/cell/color.mac"
 
 %ifndef TERM_STATE_DEFINED
 %define TERM_STATE_DEFINED

@@ -1,4 +1,4 @@
-%include "src/struct/color.mac"
+%include "src/renderer/terminal/cell/color.mac"
 
 %ifndef CELL_DEFINED
 %define CELL_DEFINED

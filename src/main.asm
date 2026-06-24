@@ -1,10 +1,10 @@
 default rel
 
-; terminal/alternate-buffer
+; renderer/terminal/alternate-buffer
 extern enable_alt_buffer
 extern disable_alt_buffer
 
-; screen/main-menu/main-menu
+; scene/main-menu/main-menu
 extern main_menu
 
 ; util/time
