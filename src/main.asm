@@ -10,6 +10,8 @@ extern main_menu
 ; util/time
 extern calibrate_tsc_frequency
 
+extern exit
+
 
 section .data
 arg_debug db "--debug", 0x0 ; \0
@@ -32,6 +34,19 @@ section .text
 
 global _start
 _start:
+
+%ifdef PLATFORM_WINDOWS
+  ; windows calls _start leaving rsp 8 byte aligned
+  ; so subtracting 8 to make it 16 byte aligned
+  sub rsp, 8
+%endif
+
+%ifdef PLATFORM_WINDOWS
+  ; testing exit
+  mov  rdi, 69
+  call exit
+%endif
+
   ; argc
   mov rdx, qword [rsp]
 
@@ -71,9 +86,8 @@ _start:
   syscall
 
   ; Exit with error
-  mov rax, 60
-  mov rdi, 1
-  syscall
+  mov  rdi, 1
+  call exit
 
   .debug_open_success:
   mov qword [debug_fd], rax
@@ -92,7 +106,6 @@ _start:
 
 
   ; Exit with code 0
-  mov rax, 60
-  mov edi, 0
-  syscall
+  mov  rdi, 0
+  call exit
 

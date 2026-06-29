@@ -1,0 +1,9 @@
+%ifndef SYSCALL_NUMBER_DEFINED
+%define SYSCALL_NUMBER_DEFINED
+
+  %ifdef PLATFORM_LINUX
+    %define SYS_exit  60
+  %endif
+
+%endif
+

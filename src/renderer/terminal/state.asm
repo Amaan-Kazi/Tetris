@@ -21,6 +21,9 @@ extern disable_alt_buffer
 ; renderer/terminal/reset-screen
 extern reset_screen
 
+; os/exit
+extern exit
+
 
 %include "src/util/vector.mac"
 
@@ -89,9 +92,8 @@ setup_screen:
   syscall
 
   ; Exit with error
-  mov rax, 60
-  mov rdi, 1
-  syscall
+  mov  rdi, 1
+  call exit
 
   .stdout_is_term:
 
