@@ -2,6 +2,7 @@
 %define SYSCALL_NUMBER_DEFINED
 
   %ifdef PLATFORM_LINUX
+    %define SYS_write 1
     %define SYS_exit  60
   %endif
 

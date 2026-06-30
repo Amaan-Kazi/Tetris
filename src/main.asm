@@ -10,6 +10,14 @@ extern main_menu
 ; util/time
 extern calibrate_tsc_frequency
 
+; os/std-fd
+extern get_std_fd
+extern STDOUT
+
+; os/write
+extern write
+
+; os/exit
 extern exit
 
 
@@ -29,6 +37,9 @@ debug_fd dq -1
 debug_file_error db "ERROR: failed to open debug file", 0x0A
 debug_file_error_length equ $ - debug_file_error
 
+test_msg db "Hello World", 0x0A, "Line 2", 0x0A
+test_len equ $ - test_msg
+
 
 section .text
 
@@ -41,9 +52,16 @@ _start:
   sub rsp, 8
 %endif
 
+; set stdin, stdout and stderr platform agnostically
+call get_std_fd
+
 %ifdef PLATFORM_WINDOWS
-  ; testing exit
-  mov  rdi, 69
+  mov rdi, qword [STDOUT]
+  lea rsi, [test_msg]
+  mov rdx, test_len
+  call write
+
+  mov  rdi, rax
   call exit
 %endif
 
