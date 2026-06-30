@@ -3,6 +3,12 @@ default rel
 ; renderer/terminal/state
 extern current_term_state
 
+; os/std-fd
+extern STDOUT
+
+; os/write
+extern write
+
 %include "src/renderer/terminal/term-state.mac"
 %include "src/renderer/terminal/cell/flags.mac"
 
@@ -49,11 +55,10 @@ reset_screen:
   mov byte [current_term_state + term_state.underline_type], CELL_NO_UNDERLINE
 
   ; print reset_string
-  mov rax, 1 ; write
-  mov rdi, 1 ; stdout
+  mov rdi, qword [STDOUT]
   lea rsi, [reset_string]
   mov rdx, reset_string_length
-  syscall
+  call write
 
   mov rsp, rbp
   pop rbp

@@ -1,5 +1,11 @@
 default rel
 
+; os/std-fd
+extern STDOUT
+
+; os/write
+extern write
+
 section .data
 ; https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands
 
@@ -19,11 +25,10 @@ enable_alt_buffer:
   push rbp
   mov  rbp, rsp
 
-  mov rax, 1 ; write
-  mov edi, 1 ; stdout
+  mov rdi, qword [STDOUT]
   lea rsi, [enable]
   mov rdx, length1
-  syscall
+  call write
 
   mov rsp, rbp
   pop rbp
@@ -34,11 +39,10 @@ disable_alt_buffer:
   push rbp
   mov  rbp, rsp
 
-  mov rax, 1 ; write
-  mov edi, 1 ; stdout
+  mov rdi, qword [STDOUT]
   lea rsi, [disable]
   mov rdx, length2
-  syscall
+  call write
 
   mov rsp, rbp
   pop rbp

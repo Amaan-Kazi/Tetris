@@ -13,6 +13,7 @@ extern calibrate_tsc_frequency
 ; os/std-fd
 extern get_std_fd
 extern STDOUT
+extern STDERR
 
 ; os/write
 extern write
@@ -97,11 +98,10 @@ call get_std_fd
   cmp rax, 0
   jge .debug_open_success
 
-  mov rax, 1 ; SYS_write
-  mov rdi, 2 ; stderr
-  lea rsi, [debug_file_error]
-  mov rdx, debug_file_error_length
-  syscall
+  mov  rdi, qword [STDERR]
+  lea  rsi, [debug_file_error]
+  mov  rdx, debug_file_error_length
+  call write
 
   ; Exit with error
   mov  rdi, 1

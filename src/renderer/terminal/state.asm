@@ -21,6 +21,13 @@ extern disable_alt_buffer
 ; renderer/terminal/reset-screen
 extern reset_screen
 
+; os/std-fd
+extern STDOUT
+extern STDERR
+
+; os/write
+extern write
+
 ; os/exit
 extern exit
 
@@ -85,11 +92,10 @@ setup_screen:
 
   call disable_alt_buffer
 
-  mov rax, 1 ; SYS_write
-  mov rdi, 2 ; stderr
+  mov rdi, qword [STDERR]
   lea rsi, [stdout_error]
   mov rdx, stdout_error_length
-  syscall
+  call write
 
   ; Exit with error
   mov  rdi, 1
@@ -242,20 +248,18 @@ setup_screen:
   lea rdi, [rbp - 8]
   call generate_rect
 
-  mov rax, 1
-  mov rdi, 1
+  mov rdi, qword [STDOUT]
   mov rsi, qword [output_buffer + vector.data]
   mov rdx, qword [output_buffer + vector.size]
-  syscall
+  call write
 
   cmp byte [debug_mode], 1
   jne .exit
 
-  mov rax, 1
   mov rdi, qword [debug_fd]
   mov rsi, qword [output_buffer + vector.data]
   mov rdx, qword [output_buffer + vector.size]
-  syscall
+  call write
 
   .exit:
   mov rsp, rbp
@@ -291,12 +295,11 @@ screen_change_handler:
   mov  qword [rbp - 30], rax
 
   ; print capacity
-  mov rax, 1 ; write
-  mov rdi, 1 ; stdout
+  mov rdi, qword [STDOUT]
   lea rsi, [rbp - 22]
   mov rdx, qword [rbp - 30]
   add rdx, 2
-  syscall
+  call write
 
   mov rsp, rbp
   pop rbp

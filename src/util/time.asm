@@ -7,6 +7,23 @@ extern debug_fd
 ; util/ascii
 extern num_to_ascii
 
+; os/write
+extern write
+
+
+%macro call_write 3
+  mov  rdi, %1
+  lea  rsi, %2
+  mov  rdx, %3
+  call write
+%endmacro
+
+%macro call_num_to_ascii 3
+  mov  rdi, %1
+  mov  rsi, %2
+  lea  rdx, %3
+  call num_to_ascii
+%endmacro
 
 struc timespec
   .tv_sec  resb 8
@@ -71,6 +88,7 @@ msg11_len equ $ - msg11
 
 testmsg   db "ns", 0x0A, 0x0A
 test_len  equ $ - testmsg
+
 
 section .text
 
@@ -212,198 +230,51 @@ calibrate_tsc_frequency:
   mov byte [testmsg], " "
 
   .testing:
-  mov rdi, rax
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
+  call_num_to_ascii rax, 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
+  call_write qword [debug_fd], [testmsg], test_len
 
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
+  call_write qword [debug_fd], [msg1], msg1_len
+  call_num_to_ascii qword [rbp - 16], 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
 
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, testmsg
-  mov rdx, test_len
-  syscall
+  call_write qword [debug_fd], [msg2], msg2_len
+  call_num_to_ascii qword [rbp - 48 + timespec.tv_nsec], 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
 
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg1]
-  mov rdx, msg1_len
-  syscall
+  call_write qword [debug_fd], [msg3], msg3_len
+  call_num_to_ascii qword [tsc_ticks_per_ns], 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
 
-  mov rdi, qword [rbp - 16]
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
+  call_write qword [debug_fd], [msg4], msg4_len
+  call_num_to_ascii qword [tsc_ticks_per_us], 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
 
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
+  call_write qword [debug_fd], [msg5], msg5_len
+  call_num_to_ascii qword [tsc_ticks_per_ms], 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
 
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg2]
-  mov rdx, msg2_len
-  syscall
+  call_write qword [debug_fd], [msg6], msg6_len
+  call_num_to_ascii qword [tsc_ticks_per_s], 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
 
-  mov rdi, qword [rbp - 48 + timespec.tv_nsec]
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
+  call_write qword [debug_fd], [msg7], msg7_len
+  call_num_to_ascii qword [tsc_ns_per_tick], 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
 
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
+  call_write qword [debug_fd], [msg8], msg8_len
+  call_num_to_ascii qword [tsc_us_per_tick], 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
 
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg3]
-  mov rdx, msg3_len
-  syscall
+  call_write qword [debug_fd], [msg9], msg9_len
+  call_num_to_ascii qword [tsc_ms_per_tick], 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
 
-  mov rdi, qword [tsc_ticks_per_ns]
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
+  call_write qword [debug_fd], [msg10], msg10_len
+  call_num_to_ascii qword [tsc_s_per_tick], 0, [rbp - 96]
+  call_write qword [debug_fd], [rbp - 96], rax
 
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
-
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg4]
-  mov rdx, msg4_len
-  syscall
-
-  mov rdi, qword [tsc_ticks_per_us]
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
-
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
-
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg5]
-  mov rdx, msg5_len
-  syscall
-
-  mov rdi, qword [tsc_ticks_per_ms]
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
-
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
-
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg6]
-  mov rdx, msg6_len
-  syscall
-
-  mov rdi, qword [tsc_ticks_per_s]
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
-
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
-
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg7]
-  mov rdx, msg7_len
-  syscall
-
-  mov rdi, qword [tsc_ns_per_tick]
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
-
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
-
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg8]
-  mov rdx, msg8_len
-  syscall
-
-  mov rdi, qword [tsc_us_per_tick]
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
-
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
-
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg9]
-  mov rdx, msg9_len
-  syscall
-
-  mov rdi, qword [tsc_ms_per_tick]
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
-
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
-
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg10]
-  mov rdx, msg10_len
-  syscall
-
-  mov rdi, qword [tsc_s_per_tick]
-  mov rsi, 0
-  lea rdx, [rbp - 96]
-  call num_to_ascii
-
-  mov rdx, rax
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [rbp - 96]
-  syscall
-
-  mov rax, 1
-  mov rdi, qword [debug_fd]
-  lea rsi, [msg11]
-  mov rdx, msg11_len
-  syscall
+  call_write qword [debug_fd], [msg11], msg11_len
 
   .exit:
   mov rsp, rbp
