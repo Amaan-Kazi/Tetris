@@ -15,11 +15,16 @@ extern get_std_fd
 extern STDOUT
 extern STDERR
 
+; os/open
+extern open
+
 ; os/write
 extern write
 
 ; os/exit
 extern exit
+
+%include "src/os/open-flags.mac"
 
 
 section .data
@@ -57,7 +62,11 @@ _start:
 call get_std_fd
 
 %ifdef PLATFORM_WINDOWS
-  mov rdi, qword [STDOUT]
+  lea rdi, [debug_file] ; filename
+  mov rsi, OPEN_APPEND | OPEN_TRUNCATE | OPEN_CREATE | OPEN_WRITE
+  call open
+
+  mov rdi, rax
   lea rsi, [test_msg]
   mov rdx, test_len
   call write
@@ -89,11 +98,9 @@ call get_std_fd
     cmp al, 0
   jne .debug_check_loop
 
-  mov rax, 2            ; SYS_open
   lea rdi, [debug_file] ; filename
-  mov rsi, 0x641        ; flags = O_APPEND (0x400) | O_TRUNC (0x200) | O_CREAT (0x040) | O_WRONLY (0x001)
-  mov rdx, 0o644        ; mode
-  syscall
+  mov rsi, OPEN_APPEND | OPEN_TRUNCATE | OPEN_CREATE | OPEN_WRITE
+  call open
 
   cmp rax, 0
   jge .debug_open_success
