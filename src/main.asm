@@ -7,7 +7,7 @@ extern disable_alt_buffer
 ; scene/main-menu/main-menu
 extern main_menu
 
-; util/time
+; os/time
 extern calibrate_tsc_frequency
 
 ; os/std-fd
@@ -66,10 +66,15 @@ call get_std_fd
   mov rsi, OPEN_APPEND | OPEN_TRUNCATE | OPEN_CREATE | OPEN_WRITE
   call open
 
+  mov qword [debug_fd], rax
+  mov byte [debug_mode], 1
+
   mov rdi, rax
   lea rsi, [test_msg]
   mov rdx, test_len
   call write
+
+  call calibrate_tsc_frequency
 
   mov  rdi, rax
   call exit

@@ -1,5 +1,13 @@
 default rel
 
+%ifdef PLATFORM_WINDOWS
+  extern QueryPerformanceCounter
+  extern QueryPerformanceFrequency
+  extern Sleep
+%else
+  %include "src/os/syscall-number.mac"
+%endif
+
 ; main
 extern debug_mode
 extern debug_fd
@@ -32,6 +40,8 @@ endstruc
 
 
 section .data
+
+windows_qpf dq 0
 
 global tsc_ticks_per_ns
 global tsc_ticks_per_us
@@ -92,6 +102,60 @@ test_len  equ $ - testmsg
 
 section .text
 
+; arg1 rdi = 16 byte *timespec
+global get_clock_time
+get_clock_time:
+  push rbp
+  mov  rbp, rsp
+
+%ifdef PLATFORM_WINDOWS
+  sub rsp, 32 ; shadow space
+
+  cmp qword [windows_qpf], 0
+  jne .frequency_handled
+    lea  rcx, [windows_qpf]
+    call QueryPerformanceFrequency
+  .frequency_handled:
+
+  ; rdi and rsi are preserved according to Windows x64 ABI
+  lea  rcx, [rdi + timespec.tv_nsec]
+  call QueryPerformanceCounter
+
+  ; frequency                                                      = ticks / second
+  ; QueryPerformanceFrequency                                      = QueryPerformanceCounter / seconds
+  ; QueryPerformanceCounter / QueryPerformanceFrequency            = seconds
+  ; QueryPerformanceCounter * 1billion / QueryPerformanceFrequency = seconds * 1billion
+  ; QueryPerformanceCounter * 1billion / QueryPerformanceFrequency = nanoseconds
+
+  ; rdx:rax = QueryPerformanceCounter * 1billion
+  mov rax, [rdi + timespec.tv_nsec]
+  mov rdx, 1000000000
+  mul rdx
+
+  ; rax = QueryPerformanceCounter * 1billion / QueryPerformanceFrequency = nanoseconds
+  mov rsi, qword [windows_qpf]
+  div rsi
+
+  ; rdx = remaining nanoseconds, rax = seconds
+  ; doing this without multiplying by 1billion first would have resulted in loss of nanoseconds
+  mov rdx, 0
+  mov rsi, 1000000000
+  div rsi
+
+  mov qword [rdi + timespec.tv_sec ], rax
+  mov qword [rdi + timespec.tv_nsec], rdx
+%else
+  ; get monotonic clock time
+  mov rax, SYS_clock_gettime
+  mov rsi, rdi ; *timespec
+  mov rdi, 4 ; CLOCK_MONOTONIC_RAW
+  syscall
+%endif
+
+  mov rsp, rbp
+  pop rbp
+  ret
+
 ; calibrates tsc_frequency by sleeping for 20ms and measure monotonic clock time against tsc time
 global calibrate_tsc_frequency
 calibrate_tsc_frequency:
@@ -101,10 +165,8 @@ calibrate_tsc_frequency:
   sub rsp, 96
 
   ; get monotonic clock time
-  mov rax, 228 ; SYS_clock_gettime
-  mov rdi, 4   ; CLOCK_MONOTONIC_RAW
-  lea rsi, [rbp - 32]
-  syscall
+  lea  rdi, [rbp - 32]
+  call get_clock_time
 
   ; get tsc time
   mfence
@@ -116,18 +178,26 @@ calibrate_tsc_frequency:
   or  rax, rdx
   mov qword [rbp - 8], rax
 
+%ifdef PLATFORM_WINDOWS
+  sub rsp, 32
+
+  ; Sleep for 20ms
+  mov  rcx, 20
+  call Sleep
+
+  add rsp, 32
+%else
   ; sleep for 20ms
   mov qword [rbp - 64 + timespec.tv_nsec], 20 * 1000000 ; 20ms
-  mov rax, 35         ; SYS_nanosleep
+  mov rax, SYS_nanosleep
   lea rdi, [rbp - 64] ; requested time
   mov rsi, 0          ; remaining time = NULL
   syscall
+%endif
 
   ; get monotonic clock time
-  mov rax, 228 ; SYS_clock_gettime
-  mov rdi, 4   ; CLOCK_MONOTONIC_RAW
-  lea rsi, [rbp - 48]
-  syscall
+  lea  rdi, [rbp - 48]
+  call get_clock_time
 
   ; get tsc
   rdtscp
@@ -168,6 +238,7 @@ calibrate_tsc_frequency:
   mul rdx
   mov rcx, qword [rbp - 48 + timespec.tv_nsec]
   div rcx
+
   mov qword [tsc_ticks_per_s], rax
 
   mov rdx, 0

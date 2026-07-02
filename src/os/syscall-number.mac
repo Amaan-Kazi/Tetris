@@ -2,9 +2,11 @@
 %define SYSCALL_NUMBER_DEFINED
 
   %ifdef PLATFORM_LINUX
-    %define SYS_write 1
-    %define SYS_open  2
-    %define SYS_exit  60
+    %define SYS_write         1
+    %define SYS_open          2
+    %define SYS_nanosleep     35
+    %define SYS_exit          60
+    %define SYS_clock_gettime 228
   %endif
 
 %endif
